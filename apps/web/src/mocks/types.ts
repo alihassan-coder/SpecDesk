@@ -151,13 +151,31 @@ export type StreamEvent =
   | { type: "error"; title: string; message: string; action: string }
   | { type: "done"; planId: string };
 
+export interface LeadActivity {
+  at: string; // ISO date-time
+  kind: "signup" | "plan" | "version" | "file" | "booking" | "email" | "note";
+  text: string;
+}
+
 export interface Lead {
   id: string;
   name: string;
   email: string;
+  company: string;
+  role: string;
+  country: string;
+  timezone: string;
+  source: "Google" | "LinkedIn" | "Referral" | "Direct" | "X";
   idea: string;
   budget: string;
   status: "new" | "booked" | "contacted" | "won" | "lost";
+  signedUpAt: string; // ISO date-time
+  lastActiveAt: string; // ISO date-time
+  plans: { id: string; title: string; version: string; priceMin: number; priceMax: number; weeks: number }[];
+  call?: { at: string; status: "scheduled" | "done" | "no-show" | "cancelled"; meetUrl?: string };
+  downloads: number;
+  activity: LeadActivity[];
+  notes?: string;
   createdAt: string;
 }
 

@@ -8,6 +8,9 @@ import type {
   StreamEvent,
 } from "./types";
 
+/** Fixed "now" for mock timestamps, so relative times render the same on server and client. */
+export const MOCK_NOW = new Date("2026-11-06T12:00:00Z");
+
 export const DEMO_IDEA =
   "An app for independent physiotherapists: patients book sessions, get a home exercise plan with videos, and the physio can see whether they actually did the exercises.";
 
@@ -194,7 +197,7 @@ export const DEMO_PLAN: Plan = {
   ],
   phases: [
     { name: "Discovery & design", weeks: 2, deliverables: ["Clickable prototype", "Design system"] },
-    { name: "Core build", weeks: 6, deliverables: ["Sign-in", "Booking", "Payments", "Exercise plans"] },
+    { name: "Core build", weeks: 5, deliverables: ["Sign-in", "Booking", "Payments", "Exercise plans"] },
     { name: "Adherence & reminders", weeks: 2, deliverables: ["Check-off", "Dashboard", "Push"] },
     { name: "QA & launch", weeks: 2, deliverables: ["Beta with 5 physios", "App store release"] },
   ],
@@ -217,8 +220,8 @@ export const DEMO_PLAN: Plan = {
     { name: "MedBridge", url: "https://www.medbridge.com", note: "Enterprise HEP; heavy for solo practitioners." },
   ],
   versions: [
-    { id: "v1", label: "v1 · First draft", createdAt: "2026-11-06T10:02:00Z", priceMin: 13900, priceMax: 18600, weeks: 14, change: "Initial plan with in-app chat and video upload." },
-    { id: "v2", label: "v2 · Lean MVP", createdAt: "2026-11-06T10:09:00Z", priceMin: 11200, priceMax: 14900, weeks: 12, change: "Moved chat and video upload to later. −$3,700, −2 weeks." },
+    { id: "v1", label: "v1 · First draft", createdAt: "2026-11-06T10:02:00Z", priceMin: 17400, priceMax: 23600, weeks: 14, change: "Initial plan with in-app chat and video upload." },
+    { id: "v2", label: "v2 · Lean MVP", createdAt: "2026-11-06T10:09:00Z", priceMin: 13900, priceMax: 18800, weeks: 11, change: "Moved chat and video upload to later. −$4,800, −3 weeks." },
   ],
   files: [
     { id: "pdf", name: "Rehabit-plan.pdf", kind: "pdf", size: "412 KB" },
@@ -248,7 +251,7 @@ export const PIPELINE_SCRIPT: { delay: number; event: StreamEvent }[] = [
   { delay: 700, event: { type: "agent.reasoning", agent: "architect", text: "Video on patients' mobile data needs adaptive streaming. Mux over raw S3: more expensive per minute, but saves ~3 weeks of encoding work." } },
   { delay: 500, event: { type: "agent.status", agent: "architect", status: "done" } },
   { delay: 200, event: { type: "agent.status", agent: "estimator", status: "working" } },
-  { delay: 900, event: { type: "agent.note", agent: "estimator", text: "328 hours for the MVP, +20% buffer → 12 weeks." } },
+  { delay: 900, event: { type: "agent.note", agent: "estimator", text: "388 hours incl. setup, +20% buffer → 466 hours, about 11 weeks." } },
   { delay: 500, event: { type: "agent.status", agent: "estimator", status: "done" } },
   { delay: 200, event: { type: "agent.status", agent: "critic", status: "working" } },
   { delay: 200, event: { type: "agent.status", agent: "researcher", status: "working" } },
@@ -258,7 +261,7 @@ export const PIPELINE_SCRIPT: { delay: number; event: StreamEvent }[] = [
   { delay: 300, event: { type: "agent.status", agent: "researcher", status: "done" } },
   ...DEMO_PLAN.files.map((file, i) => ({ delay: i === 0 ? 500 : 250, event: { type: "file.ready", file } as StreamEvent })),
   { delay: 400, event: { type: "done", planId: "demo" } },
-  { delay: 800, event: { type: "booking.suggest", reason: "Your plan is ready. Want to talk it through with the team who'd build it?" } },
+  { delay: 800, event: { type: "booking.suggest", reason: "Want us to build it?" } },
 ];
 
 export const CHATS: ChatSummary[] = [
@@ -276,10 +279,73 @@ export const MEMORIES: Memory[] = [
 ];
 
 export const LEADS: Lead[] = [
-  { id: "l1", name: "Sara Ahmed", email: "sara@rehabit.io", idea: "Physio exercise app", budget: "$11k–15k", status: "booked", createdAt: "2026-11-06" },
-  { id: "l2", name: "Tom Becker", email: "tom@lensloop.com", idea: "Used camera gear marketplace", budget: "$18k–24k", status: "new", createdAt: "2026-11-05" },
-  { id: "l3", name: "Priya Nair", email: "priya@brieflaw.ai", idea: "AI meeting notes for lawyers", budget: "$25k–33k", status: "contacted", createdAt: "2026-11-03" },
-  { id: "l4", name: "Omar Khan", email: "omar@ridewise.pk", idea: "School bus tracking", budget: "$9k–12k", status: "won", createdAt: "2026-10-28" },
+  {
+    id: "l1", name: "Sara Ahmed", email: "sara@rehabit.io", company: "Rehabit", role: "Founder, physiotherapist",
+    country: "United Arab Emirates", timezone: "Asia/Dubai (GMT+4)", source: "LinkedIn",
+    idea: "Physio booking and home-exercise app", budget: "$14k–19k", status: "booked",
+    signedUpAt: "2026-11-06T09:58:00Z", lastActiveAt: "2026-11-06T10:14:00Z",
+    plans: [{ id: "demo", title: "Rehabit", version: "v2", priceMin: 13900, priceMax: 18800, weeks: 11 }],
+    call: { at: "2026-11-10T07:00:00Z", status: "scheduled", meetUrl: "https://meet.google.com/abc-defg-hij" },
+    downloads: 3,
+    activity: [
+      { at: "2026-11-06T09:58:00Z", kind: "signup", text: "Signed in with email code" },
+      { at: "2026-11-06T10:02:00Z", kind: "plan", text: "Generated plan v1 · $17,400 – $23,600" },
+      { at: "2026-11-06T10:09:00Z", kind: "version", text: "Saved v2 · moved chat and video upload to later (−$4,800)" },
+      { at: "2026-11-06T10:11:00Z", kind: "file", text: "Downloaded Rehabit-plan.pdf and the ZIP" },
+      { at: "2026-11-06T10:14:00Z", kind: "booking", text: "Booked a call for Tue 10 Nov, 11:00 Dubai time" },
+    ],
+    notes: "Wants to launch with 5 physios in Dubai first. Asked about HIPAA vs. UAE data rules.",
+    createdAt: "2026-11-06",
+  },
+  {
+    id: "l2", name: "Tom Becker", email: "tom@lensloop.com", company: "LensLoop", role: "Co-founder",
+    country: "Germany", timezone: "Europe/Berlin (GMT+1)", source: "Google",
+    idea: "Peer-to-peer camera gear rental marketplace", budget: "$18k–24k", status: "new",
+    signedUpAt: "2026-11-05T15:20:00Z", lastActiveAt: "2026-11-05T16:40:00Z",
+    plans: [{ id: "c2", title: "LensLoop", version: "v1", priceMin: 18200, priceMax: 24600, weeks: 14 }],
+    downloads: 1,
+    activity: [
+      { at: "2026-11-05T15:20:00Z", kind: "signup", text: "Signed in with email code" },
+      { at: "2026-11-05T15:31:00Z", kind: "plan", text: "Generated plan v1 · $18,200 – $24,600" },
+      { at: "2026-11-05T16:40:00Z", kind: "file", text: "Downloaded spec.md" },
+    ],
+    createdAt: "2026-11-05",
+  },
+  {
+    id: "l3", name: "Priya Nair", email: "priya@brieflaw.ai", company: "BriefLaw", role: "CEO",
+    country: "United Kingdom", timezone: "Europe/London (GMT+0)", source: "Referral",
+    idea: "AI meeting notes for law firms", budget: "$25k–33k", status: "contacted",
+    signedUpAt: "2026-11-03T08:40:00Z", lastActiveAt: "2026-11-04T12:05:00Z",
+    plans: [{ id: "c3", title: "BriefLaw", version: "draft", priceMin: 25000, priceMax: 33800, weeks: 16 }],
+    call: { at: "2026-11-04T11:00:00Z", status: "done" },
+    downloads: 2,
+    activity: [
+      { at: "2026-11-03T08:40:00Z", kind: "signup", text: "Signed in with email code" },
+      { at: "2026-11-03T09:12:00Z", kind: "plan", text: "Started interview · 2 of 3 rounds answered" },
+      { at: "2026-11-03T09:30:00Z", kind: "booking", text: "Booked a call for Wed 4 Nov, 11:00 London time" },
+      { at: "2026-11-04T11:00:00Z", kind: "booking", text: "Call held · 34 minutes" },
+      { at: "2026-11-04T12:05:00Z", kind: "email", text: "Sent proposal email" },
+    ],
+    notes: "Needs SOC 2 path. Decision expected after their board meeting on 20 Nov.",
+    createdAt: "2026-11-03",
+  },
+  {
+    id: "l4", name: "Omar Khan", email: "omar@ridewise.pk", company: "RideWise", role: "Founder",
+    country: "Pakistan", timezone: "Asia/Karachi (GMT+5)", source: "Direct",
+    idea: "School bus tracking for parents", budget: "$9k–12k", status: "won",
+    signedUpAt: "2026-10-28T13:05:00Z", lastActiveAt: "2026-11-02T10:30:00Z",
+    plans: [{ id: "c4", title: "RideWise", version: "v3", priceMin: 9200, priceMax: 12400, weeks: 9 }],
+    call: { at: "2026-10-30T09:00:00Z", status: "done" },
+    downloads: 5,
+    activity: [
+      { at: "2026-10-28T13:05:00Z", kind: "signup", text: "Signed in with email code" },
+      { at: "2026-10-28T13:20:00Z", kind: "plan", text: "Generated plan v1" },
+      { at: "2026-10-29T08:10:00Z", kind: "version", text: "Saved v3 · added live arrival alerts" },
+      { at: "2026-10-30T09:00:00Z", kind: "booking", text: "Call held · 41 minutes" },
+      { at: "2026-11-02T10:30:00Z", kind: "note", text: "Signed contract · kickoff 16 Nov" },
+    ],
+    createdAt: "2026-10-28",
+  },
 ];
 
 export const MODEL_OPTIONS = [

@@ -14,7 +14,8 @@ Read before working: [docs/PLAN.md](docs/PLAN.md) (scope & milestones), [docs/AR
 ## Commands
 - `pnpm dev:web` — run frontend (from repo root)
 - `pnpm lint:web` / `pnpm build:web`
-- Add shadcn components: `cd apps/web && pnpm dlx shadcn@latest add <component>`
+- Add shadcn components: `cd apps/web && npm_config_prefer_offline=true pnpm dlx shadcn@latest add <component>`
+- Installs: always `pnpm install --prefer-offline` (slow network; local store has almost everything)
 
 ## Rules
 - **Use built-in / official tooling first** (shadcn components, AI Elements, Better Auth plugins, LiteLLM, Mem0). Don't hand-roll what a library already does.
@@ -24,7 +25,7 @@ Read before working: [docs/PLAN.md](docs/PLAN.md) (scope & milestones), [docs/AR
 - Software-engineering ideas only.
 - Security: every resource is owned by a user; never trust client-sent user ids. Admin comes from `ADMIN_EMAILS` env.
 - Secrets only in env files; never commit `.env*` (except `.env.example`).
-- Design: premium, dark-first, shadcn tokens (CSS variables) only — no hard-coded colors, so the settings theme customizer works. See [docs/UI.md](docs/UI.md).
+- Design: **default shadcn/ui look** (radix-nova, neutral, blue primary, Geist, light + dark via next-themes). Use shadcn components (Card, Field, Item, Sidebar, Empty…) instead of custom styling; tokens only, no hard-coded colours. See [docs/UI.md](docs/UI.md).
 
 ## Engineering standards
 - TypeScript strict; no `any`. Python fully typed (pyright/mypy), formatted with ruff.

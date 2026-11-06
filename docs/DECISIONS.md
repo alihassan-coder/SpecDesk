@@ -20,6 +20,11 @@ Short records of product/tech decisions. Newest last.
 | 14 | 2026-11-06 | Deploy everything on Vercel | Simplicity |
 | 15 | 2026-11-06 | Build UI first with mock data + guest demo mode, review before backend | See it before building it |
 | 16 | 2026-11-06 | Prefer built-in libraries (shadcn, AI Elements, Better Auth, LiteLLM, Mem0) over custom code | Speed, quality |
-| 17 | 2026-11-06 | Premium dark-first design on shadcn | Signals a serious engineering agency |
+| 17 | 2026-11-06 | ~~Premium dark-first custom design~~ — superseded by #20 | — |
 | 18 | 2026-11-06 | Admin panel manages provider API keys + model per agent; keys encrypted at rest (Fernet, `SECRETS_ENCRYPTION_KEY`), shown masked, env vars are fallback | Owner wants keys/models editable without redeploy |
 | 19 | 2026-11-06 | Alembic owns app tables (psycopg 3, direct Neon URL for migrations, run as deploy step, Neon branch per PR); Better Auth and Mem0 tables excluded | Safe, reviewable migrations — see MIGRATIONS.md |
+| 20 | 2026-11-06 | Default shadcn/ui look (radix-nova, neutral, blue primary, Geist), light default + dark toggle via next-themes; distinctiveness in product features and logo | Owner rejected the custom "drafting desk" style; reference app: timedesk |
+| 21 | 2026-11-06 | Calendly inline embed (https://calendly.com/alihassan-plotap/free-call) with name/email/plan/date prefill; `calendly.event_scheduled` postMessage → confirmation; webhook in M6 | Owner's booking page; official embed URL, no extra dependency |
+| 22 | 2026-11-06 | Short landing page: one 3-step glass diagram (Idea → AI → Plan) instead of long sections; macOS-style `.glass` utility for light + dark | Owner wanted simple, one-glance, not AI-template-looking, with glass effect |
+| 23 | 2026-11-06 | Booking = instant popup (shadcn Calendar + times) that continues on Calendly with day + details prefilled; Calendly iframe only on /book. Sample times until Calendly API in M6 | Iframe was too slow on the owner's connection |
+| 24 | 2026-11-06 | New logo: three dots converging into one (many agents → one plan); tactile gradient buttons (no shadows) as the global shadcn Button default/outline style | Owner request; brand ties to the product mechanism |

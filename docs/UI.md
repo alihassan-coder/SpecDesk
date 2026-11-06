@@ -1,39 +1,21 @@
 # SpecDesk — UI Spec (M1, mock data)
 
-## Design direction: "the drafting desk"
+## Design direction: default shadcn/ui
 
-SpecDesk turns a loose idea into a measured spec — like an architect's drafting table.
-The visual language borrows from technical drawings: a faint drafting grid, **dimension lines**
-that annotate numbers (price, weeks), and one warm highlighter colour for the thing you should do next.
+SpecDesk uses the **stock shadcn/ui look** (style `radix-nova`, base colour neutral) with a **blue primary**,
+**light theme by default** and a dark-mode toggle (next-themes). Reference: the owner's *timedesk* app.
 
-### Tokens (dark default)
-
-| Token | Hex | Use |
-|---|---|---|
-| Ink | `#0C1220` | App background (deep blueprint navy, not black) |
-| Desk | `#131B2E` | Panels, sidebar |
-| Rule | `#24314D` | Borders, grid lines |
-| Paper | `#E8ECF4` | Primary text |
-| Graphite | `#8D99B3` | Secondary text |
-| Highlighter | `#F5B544` | Primary action, focus, the "next step" |
-| Signal | `#6CC6E8` | Agent activity (working / streaming) |
-
-Light mode flips to paper `#F6F7FA` background with ink text; same highlighter.
-All colours are shadcn CSS variables so Settings → Appearance can change accent, radius, font and density.
-
-### Type
-- **Archivo** (variable, width axis): display text set *expanded* (`font-stretch: 125%`), body at normal width. One family, two voices.
-- **JetBrains Mono** only for code blocks and file contents.
-
-### Layout
-- App: ChatGPT-like. Left sidebar (projects, new plan, calendar/booking, settings) · centre conversation (max ~760px) · right **artifact panel** slides in when a file or plan section is opened.
-- Landing: left-aligned hero with the idea box; right side is a live "spec sheet" being drafted, annotated with dimension lines.
-
-### Principles
-1. The one bold thing is the spec sheet with dimension lines. Everything else is quiet.
-2. Agent activity is visible but calm — Signal colour, timeline, short notes, expandable reasoning.
-3. Every number has a reason you can open (price → breakdown, weeks → phases).
-4. Errors say what happened and what to do next.
+- **Tokens:** stock shadcn neutral CSS variables in `src/app/globals.css`; primary = blue-600 (light) / blue-500 (dark).
+  Settings → Appearance may override the accent at runtime. Never hard-code colours.
+- **Type:** Geist Sans (default), Geist Mono for code and file names. Optional Inter / system font in Settings.
+- **Components first:** Card (sections), Field (settings rows: title + description + control), Item (lists),
+  Sidebar (`collapsible="icon"`, grouped nav, NavUser footer), Tabs, Badge, Empty, Spinner, Table, Dialog, Sheet.
+  Don't hand-style what a shadcn component already does.
+- **Layout:** ChatGPT-like app shell — sidebar · centred conversation (`--chat-width`) · artifact panel on the right.
+- **Logo:** blue rounded square with a spec-sheet glyph (folded corner + check). `src/components/brand/logo.tsx`, favicon `src/app/icon.svg`.
+- **Glass (macOS-style):** `.glass` utility in globals.css (frosted, blur + saturate, inner highlight; light + dark). Needs colour behind it — `GlassBackdrop` (soft theme-colour blobs). Used on the landing page: header, idea box, workflow windows.
+- **Landing:** headline + one line + Tempo-style prompt box with chips, a divider, then the static pipeline SVG. No duplicate CTAs, no decorative blobs (one faint top glow), no "AI" sparkle icons.
+- **Distinctiveness lives in the product** (question rounds, agent timeline, scope switches, versions), not in custom styling.
 
 ## Screens
 

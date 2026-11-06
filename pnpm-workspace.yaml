@@ -1,2 +1,7 @@
 packages:
   - "apps/web"
+
+# pnpm requires explicit approval for dependency build scripts
+allowBuilds:
+  sharp: false
+  unrs-resolver: false
