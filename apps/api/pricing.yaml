@@ -1,0 +1,17 @@
+# Pricing engine config — the AI scores complexity, this file turns it into money and time.
+currency: USD
+hourly_rate: 35          # blended agency rate
+buffer: 0.20             # risk buffer added to all hours
+spread: 0.15             # ± range around the midpoint
+base_hours: 60           # setup, design system, CI/CD, deploy, QA overhead
+hours_per_week: 30       # per engineer
+team_size: 1.5
+complexity_hours:        # default hours per feature when the model gives only a size
+  S: 20
+  M: 44
+  L: 76
+  XL: 200
+platform_multiplier:
+  web: 1.0
+  mobile: 1.25
+  mobile_and_web: 1.4

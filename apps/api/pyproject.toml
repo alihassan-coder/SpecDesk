@@ -1,0 +1,16 @@
+[project]
+name = "specdesk-api"
+version = "0.1.0"
+description = "SpecDesk backend: agent pipeline, pricing, files"
+requires-python = ">=3.12"
+dependencies = []  # added in M2 with `uv add` (fastapi, pydantic-settings, sqlalchemy, alembic, litellm, mem0ai, weasyprint ...)
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "ASYNC"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
