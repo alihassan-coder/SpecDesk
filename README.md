@@ -4,7 +4,11 @@ SpecDesk turns an app idea into a full build plan: features, screens, stack, tim
 It gets there by interviewing the founder with AI agents. At the end, the founder can book a call
 with the agency.
 
-<!-- demo video: docs/media/demo.webm (added soon) -->
+## Demo
+
+![SpecDesk demo](docs/media/demo.gif)
+
+Full demo video: [demo.mp4](docs/media/demo.mp4)
 
 ## How it works
 
@@ -130,7 +134,8 @@ cp .env.example apps/api/.env
 | `AUTH_JWKS_URL`, `AUTH_ISSUER`, `AUTH_AUDIENCE` | api | Verify Better Auth JWTs | Defaults to localhost |
 | `CORS_ORIGINS` | api | Allowed origins, comma-separated | Defaults to localhost |
 | `ENVIRONMENT` | api | `development`, `test`, `preview` or `production` | No |
-| `GROQ_API_KEY` | api | Default model provider | Yes, unless saved in Admin |
+| `GROQ_API_KEY` | api | Main model provider (Groq) | Yes, unless saved in Admin |
+| `GOOGLE_API_KEY` | api | Gemini: runs some planners and backs up Groq | Recommended |
 | `ANTHROPIC_API_KEY` | api | Optional provider | No |
 | `SECRETS_ENCRYPTION_KEY` | api | Fernet key that encrypts API keys saved in Admin | For the admin key screen |
 | `BREVO_API_KEY` | both | Sends login codes (web) and "plan ready" emails (api) | No |

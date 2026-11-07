@@ -28,14 +28,14 @@ DEMO = [
 
 def test_estimate_returns_camel_case_demo_numbers() -> None:
     res = client.post(
-        "/api/v1/pricing/estimate", json={"features": DEMO, "hourlyRate": 35, "buffer": 0.2}
+        "/api/v1/pricing/estimate", json={"features": DEMO, "hourlyRate": 35, "buffer": 0.15}
     )
     assert res.status_code == 200
     assert res.json() == {
-        "hours": 466,
-        "priceMin": 13_900,
-        "priceMax": 18_800,
-        "weeks": 11,
+        "hours": 405,
+        "priceMin": 12_000,
+        "priceMax": 16_300,
+        "weeks": 9,
         "currency": "USD",
     }
 

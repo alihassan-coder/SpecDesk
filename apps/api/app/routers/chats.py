@@ -50,7 +50,7 @@ from app.services.plans import current_version, file_cards, plan_for_chat, save_
 router = APIRouter(prefix="/chats", tags=["chats"])
 
 Depth = Literal["quick", "balanced", "thorough"]
-MAX_ROUNDS: dict[Depth, int] = {"quick": 2, "balanced": 3, "thorough": 4}
+MAX_ROUNDS: dict[Depth, int] = {"quick": 1, "balanced": 2, "thorough": 3}
 
 
 # ---------- request / response shapes ----------

@@ -13,16 +13,19 @@ from app.core.errors import AppError
 
 
 BIG, SMALL = "groq:openai/gpt-oss-120b", "groq:openai/gpt-oss-20b"
+GEMINI = "google_genai:gemini-3.1-flash-lite"
 
 
-def test_default_catalog_uses_groq_120b_then_falls_back_to_20b() -> None:
-    chain = DEFAULT_CATALOG.chain_for("interviewer")
-    assert [m.id for m in chain] == [BIG, SMALL]
+def test_default_catalog_mixes_groq_and_gemini() -> None:
+    assert [m.id for m in DEFAULT_CATALOG.chain_for("interviewer")] == [BIG, GEMINI, SMALL]
+    # Agents that run in parallel with Groq ones start on Gemini, then fall back to Groq.
+    assert [m.id for m in DEFAULT_CATALOG.chain_for("ux")] == [GEMINI, SMALL]
+    assert DEFAULT_CATALOG.chain_for("triage")[0].id == SMALL
 
 
 def test_switched_off_claude_models_are_skipped() -> None:
     catalog = DEFAULT_CATALOG.model_copy(update={"default_model": "anthropic:claude-opus-5-5"})
-    assert [m.id for m in catalog.chain_for("interviewer")] == [SMALL]
+    assert [m.id for m in catalog.chain_for("interviewer")] == [GEMINI, SMALL]
 
 
 def test_agent_override_disabled_models_and_providers() -> None:
@@ -34,7 +37,7 @@ def test_agent_override_disabled_models_and_providers() -> None:
     )
     assert [m.id for m in catalog.chain_for("critic")] == [SMALL, BIG]
 
-    off = catalog.model_copy(update={"disabled_providers": ["groq"]})
+    off = catalog.model_copy(update={"disabled_providers": ["groq", "google_genai"]})
     with pytest.raises(AppError) as err:
         off.chain_for("critic")
     assert err.value.error.code == "model_not_configured"

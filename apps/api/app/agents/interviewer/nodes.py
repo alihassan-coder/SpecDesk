@@ -53,7 +53,7 @@ class InterviewContext:
 
     ask: AskModel
     max_rounds: int = 3
-    max_questions: int = 5
+    max_questions: int = 4
 
 
 # ---------- triage (front desk) ----------

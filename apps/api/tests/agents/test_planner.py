@@ -51,7 +51,8 @@ def test_assembled_plan_matches_the_web_shape_and_is_priced_in_code() -> None:
     features = {f["id"]: f for f in plan["features"]}
     assert features["booking"]["hours"] == 50  # from the estimator
     assert features["exercises"]["hours"] == engine.config.complexity_hours["L"]  # default
-    assert [f["included"] for f in plan["features"]] == [True, True, False]  # must, should, wont
+    # Only must features are in the price; should ones are add-ons the founder can switch on.
+    assert [f["included"] for f in plan["features"]] == [True, False, False]  # must, should, wont
 
     expected = engine.estimate(
         [FeatureInput(f["complexity"], f["hours"], f["included"]) for f in plan["features"]]

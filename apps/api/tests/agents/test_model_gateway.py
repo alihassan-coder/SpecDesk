@@ -102,7 +102,7 @@ def test_rate_limits_wait_and_retry_the_chain_instead_of_failing() -> None:
     def flaky(entry: ModelEntry, key: SecretStr, effort: Effort, schema: type[BaseModel]):
         def run(_: list[BaseMessage]) -> tuple[object, object]:
             calls["n"] += 1
-            if calls["n"] <= 2:  # both models limited on the first pass
+            if calls["n"] <= 3:  # all three models limited on the first pass
                 raise RateLimitError("429")
             return AIMessage(content=""), Answer(text="after waiting")
 

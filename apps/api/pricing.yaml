@@ -2,18 +2,20 @@
 # Must stay in sync with apps/web/src/lib/pricing.ts (tests/test_pricing_engine.py guards it).
 currency: USD
 hourly_rate: 35          # blended agency rate (default; a plan may override)
-buffer: 0.20             # risk buffer added to all hours (default; a plan may override)
+buffer: 0.15             # risk buffer added to all hours (default; a plan may override)
 spread: 0.15             # ± range around the midpoint
 price_round_to: 100      # prices are rounded to this step
-base_hours: 60           # setup, design system, CI/CD, deploy, QA overhead
+base_hours: 24           # setup, deploy, QA — modern templates and managed services
 hours_per_week: 30       # per engineer
 team_size: 1.5
-min_weeks: 4
+min_weeks: 2
+# Calibrated to freelance-market quotes (e.g. Upwork) for an experienced developer using modern
+# frameworks, managed services and AI coding tools — see DECISIONS.md.
 complexity_hours:        # default hours per feature when the model gives only a size
-  S: 20
-  M: 44
-  L: 76
-  XL: 200
+  S: 8
+  M: 20
+  L: 40
+  XL: 80
 platform_multiplier:     # not applied yet (frontend engine doesn't either) — see DECISIONS.md
   web: 1.0
   mobile: 1.25

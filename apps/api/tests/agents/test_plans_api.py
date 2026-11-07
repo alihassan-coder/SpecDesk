@@ -138,14 +138,14 @@ def test_scope_change_saves_a_new_version_priced_on_the_server(api: Api) -> None
 
     res = client.post(
         f"/api/v1/plans/{plan_id}/versions",
-        json={"included": {"exercises": False}, "change": "Moved exercises to later."},
+        json={"included": {"exercises": True}, "change": "Added the exercise library."},
     )
     assert res.status_code == 201
     v2 = res.json()
     assert v2["label"] == "v2 · Your edit"
-    assert v2["priceMax"] < before["estimate"]["priceMax"]
+    assert v2["priceMax"] > before["estimate"]["priceMax"]
 
     after = client.get(f"/api/v1/plans/{plan_id}").json()
     assert [v["label"] for v in after["versions"]] == ["v1", "v2 · Your edit"]
-    assert next(f for f in after["features"] if f["id"] == "exercises")["included"] is False
+    assert next(f for f in after["features"] if f["id"] == "exercises")["included"] is True
     assert after["estimate"]["priceMax"] == v2["priceMax"]

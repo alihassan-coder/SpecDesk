@@ -4,12 +4,12 @@ import type { Feature, Plan } from "@/mocks/types";
  * Rule-based estimate. Mirrors the planned Python engine (apps/api pricing.yaml):
  * hours come from AI complexity scoring; money and time come from code, never from the model.
  */
-export const BASE_HOURS = 60; // project setup, design system, deploy, QA overhead
+export const BASE_HOURS = 24; // project setup, deploy, QA overhead
 export const HOURS_PER_WEEK = 30; // effective team throughput per engineer-week
 export const TEAM_SIZE = 1.5;
 export const SPREAD = 0.15; // ± range around the midpoint
 export const PRICE_ROUND_TO = 100;
-export const MIN_WEEKS = 4;
+export const MIN_WEEKS = 2;
 
 export interface Estimate {
   hours: number;

@@ -205,7 +205,7 @@ export const DEMO_PLAN: Plan = {
   ],
   team: ["1 product designer", "2 full-stack engineers", "1 mobile engineer", "Part-time QA"],
   hourlyRate: 35,
-  buffer: 0.2,
+  buffer: 0.15,
   risks: [
     { title: "Health data compliance", impact: "high", mitigation: "Store only what's needed, encrypt at rest, check local rules (GDPR / HIPAA) before launch." },
     { title: "Patients stop opening the app", impact: "medium", mitigation: "Reminders, streaks, and physio nudges from the dashboard." },

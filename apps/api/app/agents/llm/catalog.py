@@ -97,21 +97,34 @@ def _price(inp: str, out: str, cache_read: str) -> ModelPrice:
 _CLAUDE = Capabilities(structured_output=True, thinking=True, web_search=True)
 _GPT_OSS = Capabilities(structured_output=True, thinking=True, web_search=False)
 
-# Groq is the default for now (decision 41). Claude stays listed but switched off,
-# so an admin can turn it on once an Anthropic key is added.
+_GEMINI = Capabilities(structured_output=True, thinking=True, web_search=False)
+
+GROQ_BIG = "groq:openai/gpt-oss-120b"
+GROQ_SMALL = "groq:openai/gpt-oss-20b"
+GEMINI_LITE = "google_genai:gemini-3.1-flash-lite"
+
+# Groq + Gemini together (decision 59): agents that run in parallel are spread across both
+# providers so per-minute rate limits on one don't stall the plan; each falls back to the other.
+# Claude stays listed but switched off until an Anthropic key is added.
 DEFAULT_CATALOG = ModelCatalog(
     models=[
         ModelEntry(
-            id="groq:openai/gpt-oss-120b",
+            id=GROQ_BIG,
             label="GPT-OSS 120B (Groq)",
             price=_price("0.15", "0.60", "0.075"),
             capabilities=_GPT_OSS,
         ),
         ModelEntry(
-            id="groq:openai/gpt-oss-20b",
+            id=GROQ_SMALL,
             label="GPT-OSS 20B (Groq)",
             price=_price("0.075", "0.30", "0.0375"),
             capabilities=_GPT_OSS,
+        ),
+        ModelEntry(
+            id=GEMINI_LITE,
+            label="Gemini 3.1 Flash-Lite",
+            price=_price("0.10", "0.40", "0.025"),
+            capabilities=_GEMINI,
         ),
         ModelEntry(
             id="anthropic:claude-opus-5-5",
@@ -128,11 +141,16 @@ DEFAULT_CATALOG = ModelCatalog(
             capabilities=_CLAUDE,
         ),
     ],
-    default_model="groq:openai/gpt-oss-120b",
-    fallback_models=["groq:openai/gpt-oss-20b"],
-    # The front desk only sorts messages, so it gets the small, fast model.
-    agent_models={"triage": "groq:openai/gpt-oss-20b"},
-    agent_effort={"interviewer": "medium", "triage": "low"},
+    default_model=GROQ_BIG,
+    fallback_models=[GEMINI_LITE, GROQ_SMALL],
+    agent_models={
+        "triage": GROQ_SMALL,  # the front desk only sorts messages: small and fast
+        # These run next to product (Groq) and each other, so they go to Gemini.
+        "architect": GEMINI_LITE,
+        "ux": GEMINI_LITE,
+        "backlog": GEMINI_LITE,
+    },
+    agent_effort={"interviewer": "medium", "triage": "low", "ux": "low", "backlog": "low"},
 )
 
 

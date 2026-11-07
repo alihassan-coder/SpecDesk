@@ -12,7 +12,17 @@ from app.services.pricing import FeatureInput, PricingEngine, load_pricing_confi
 
 Json = dict[str, Any]
 
-IN_FIRST_VERSION = {"must", "should"}
+# Only `must` features are in the quoted price; `should` ones are offered as add-ons (toggle on).
+IN_FIRST_VERSION = {"must"}
+
+# Total hours for the must features, by project size — freelance-market ranges (DECISIONS.md).
+HOUR_BUDGETS: dict[str, tuple[int, int]] = {
+    "small": (40, 150),
+    "medium": (150, 400),
+    "large": (400, 900),
+}
+# The estimator's must hours may exceed the budget by this much before they're scaled down.
+BUDGET_SLACK = 1.2
 
 
 def assemble_plan(state: Mapping[str, Any], engine: PricingEngine | None = None) -> Json:
@@ -26,6 +36,8 @@ def assemble_plan(state: Mapping[str, Any], engine: PricingEngine | None = None)
     critique: Json = state.get("critique") or {}
 
     features = _features(product.get("features", []), estimate.get("features", []), engine)
+    size = str(analysis.get("size") or "medium")
+    trimmed = _fit_budget(features, HOUR_BUDGETS.get(size, HOUR_BUDGETS["medium"])[1])
     totals = engine.estimate(
         [FeatureInput(f["complexity"], f["hours"], f["included"]) for f in features]
     )
@@ -39,7 +51,18 @@ def assemble_plan(state: Mapping[str, Any], engine: PricingEngine | None = None)
         "audience": analysis.get("audience", []),
         "goals": analysis.get("goals", []),
         "constraints": analysis.get("constraints", []),
-        "assumptions": analysis.get("assumptions", []),
+        "size": size,
+        "assumptions": [
+            *analysis.get("assumptions", []),
+            *(
+                [
+                    f"Hours were trimmed to the usual range for a {size} project; "
+                    "we'll confirm the exact scope on a call."
+                ]
+                if trimmed
+                else []
+            ),
+        ],
         "readiness": int(critique.get("readiness", 50)),
         "readinessNotes": critique.get("readiness_notes", []),
         "features": features,
@@ -113,6 +136,18 @@ def _features(drafts: list[Json], hours: list[Json], engine: PricingEngine) -> l
             }
         )
     return out
+
+
+def _fit_budget(features: list[Json], budget: int) -> bool:
+    """Scale must-feature hours down when they go well past the size budget. True if scaled."""
+    must = [f for f in features if f["moscow"] == "must"]
+    total = sum(int(f["hours"]) for f in must)
+    if total <= budget * BUDGET_SLACK or total == 0:
+        return False
+    ratio = budget / total
+    for f in must:
+        f["hours"] = max(4, round(int(f["hours"]) * ratio))
+    return True
 
 
 def _screen(s: Json) -> Json:

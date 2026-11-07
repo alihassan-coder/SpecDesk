@@ -14,7 +14,7 @@ from langgraph.runtime import Runtime
 from pydantic import BaseModel
 
 from app.agents.llm.ask import AskModel
-from app.agents.planner.assemble import assemble_plan
+from app.agents.planner.assemble import HOUR_BUDGETS, assemble_plan
 from app.agents.planner.schemas import (
     Analysis,
     Backlog,
@@ -92,6 +92,12 @@ def analyst(state: PlanState, runtime: Runtime[PlanContext]) -> Json:
     return {"analysis": out.model_dump()}
 
 
+def _budget(state: PlanState) -> str:
+    size = str((state.get("analysis") or {}).get("size") or "medium")
+    low, high = HOUR_BUDGETS.get(size, HOUR_BUDGETS["medium"])
+    return f"Project size: {size}. Budget for the must features: {low}-{high} hours in total."
+
+
 def product(state: PlanState, runtime: Runtime[PlanContext]) -> Json:
     def note(p: ProductSpec) -> str:
         mvp = sum(1 for f in p.features if f.moscow in ("must", "should"))
@@ -103,7 +109,7 @@ def product(state: PlanState, runtime: Runtime[PlanContext]) -> Json:
         state,
         runtime,
         uses=["analysis"],
-        task="Write the product spec.",
+        task=f"Write the product spec. {_budget(state)}",
         note=note,
     )
     return {"product": out.model_dump()}
@@ -155,7 +161,7 @@ def estimator(state: PlanState, runtime: Runtime[PlanContext]) -> Json:
         scoped,
         runtime,
         uses=["analysis", "product"],
-        task="Estimate hours for every feature id, then the phases and the team.",
+        task=f"Estimate hours for every feature id, then the phases and the team. {_budget(state)}",
         note=lambda e: f"About {sum(f.hours for f in e.features)} hours of feature work.",
     )
     return {"estimate": out.model_dump()}

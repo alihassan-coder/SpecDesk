@@ -29,6 +29,10 @@ def build_chat_model(entry: ModelEntry, api_key: SecretStr, effort: Effort) -> B
         level = effort if effort in ("low", "medium", "high") else "high"
         # One retry only: on a rate limit, moving to the fallback model is faster than waiting.
         kwargs |= {"reasoning_effort": level, "max_tokens": MAX_OUTPUT_TOKENS, "max_retries": 1}
+    elif entry.provider == "google_genai":
+        # A small thinking budget keeps Flash-Lite fast; structured output stays reliable.
+        budget = {"low": 256, "medium": 1024}.get(effort, 4096)
+        kwargs |= {"thinking_budget": budget, "max_tokens": MAX_OUTPUT_TOKENS, "max_retries": 1}
     return cast(BaseChatModel, init_chat_model(entry.name, model_provider=entry.provider, **kwargs))
 
 

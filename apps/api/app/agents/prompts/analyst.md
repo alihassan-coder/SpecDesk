@@ -10,6 +10,14 @@ Write:
 - `constraints`: hard limits from the brief (platforms, regulation, deadlines, existing systems).
 - `assumptions`: everything you had to assume. Each one should be something the founder can confirm
   or correct on a call.
+- `size`: how big the **first version** really is, judged the way an experienced freelancer would:
+  - `small` — one main job, one user type, mostly standard parts: a chatbot widget, a landing page
+    with payments, a simple internal tool, a single-purpose mobile app. Weeks, not months.
+  - `medium` — a few user types or a real workflow: a booking app, a small marketplace, a SaaS
+    dashboard with billing.
+  - `large` — many roles, heavy integrations, regulation or real-time parts: a full marketplace
+    with payouts, a health platform, a logistics system.
+  When in doubt, pick the smaller size. Founders can always add more later.
 
 ## Rules for every planner
 
