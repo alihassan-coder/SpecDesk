@@ -1,24 +1,34 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/** The glyph: three inputs converging into one result — many agents, one plan. */
+/** The glyph: a prism cube with three shaded faces — the product you're building. */
 export function LogoGlyph({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
-      <path d="M6.6 6.5C11.5 6.5 11 12 15.5 12M6.6 17.5C11.5 17.5 11 12 15.5 12M6.6 12H15.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="4.75" cy="6.5" r="1.75" fill="currentColor" />
-      <circle cx="4.75" cy="12" r="1.75" fill="currentColor" />
-      <circle cx="4.75" cy="17.5" r="1.75" fill="currentColor" />
-      <circle cx="18.25" cy="12" r="3.25" fill="currentColor" />
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+      <path d="M12 3.6 19.4 7.8 12 12 4.6 7.8z" fill="currentColor" />
+      <path d="M4.6 7.8 12 12v8.4L4.6 16.2z" fill="currentColor" opacity="0.72" />
+      <path d="M19.4 7.8v8.4L12 20.4V12z" fill="currentColor" opacity="0.45" />
     </svg>
   );
 }
 
-/** App mark: glyph on a primary rounded square (follows the accent colour). */
+/**
+ * App mark: the cube on a glossy gradient tile (top sheen + inner ring).
+ * The gradient is derived from --primary, so it follows the accent colour.
+ */
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground", className)}>
-      <LogoGlyph className="size-5" />
+    <span
+      className={cn(
+        "flex size-8 shrink-0 items-center justify-center rounded-[9px] text-white ring-1 ring-white/20 ring-inset [&_svg]:size-5",
+        className,
+      )}
+      style={{
+        backgroundImage:
+          "linear-gradient(180deg, rgb(255 255 255 / 0.22), transparent 45%), linear-gradient(135deg, color-mix(in oklab, var(--primary) 70%, white) 0%, var(--primary) 45%, color-mix(in oklab, var(--primary) 70%, #1e1b4b) 100%)",
+      }}
+    >
+      <LogoGlyph />
     </span>
   );
 }

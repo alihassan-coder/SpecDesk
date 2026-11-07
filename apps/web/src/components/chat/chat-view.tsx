@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, CalendarCheck, LayoutDashboard } from "lucide-react";
+import { CalendarCheck, LayoutDashboard, Paperclip } from "lucide-react";
 import { BookingDialog } from "@/components/booking/booking-dialog";
 import { LogoMark } from "@/components/brand/logo";
+import { SendButton, promptSurface } from "@/components/prompt/prompt-parts";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMockStream } from "@/hooks/use-mock-stream";
 import { DEMO_PLAN, PIPELINE_SCRIPT, ROUND_1, ROUND_2 } from "@/mocks/data";
@@ -16,6 +18,7 @@ import { humanize, type HumanError } from "@/lib/errors";
 import { formatRange } from "@/lib/format";
 import { estimate } from "@/lib/pricing";
 import { looksLikeSoftware } from "@/lib/scope-guard";
+import { cn } from "@/lib/utils";
 import { AgentTimeline } from "./agent-timeline";
 import { ArtifactPanel } from "./artifact-panel";
 import { FileCards } from "./file-cards";
@@ -197,7 +200,7 @@ export function ChatView({
         </div>
 
         {/* Floating composer */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-background via-background/85 to-transparent pt-12 pb-3 sm:pb-5">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-background via-background/90 to-transparent pt-10 pb-4 sm:pb-6">
           <form
             className="pointer-events-auto mx-auto w-full max-w-[var(--chat-width)] px-3 sm:px-6"
             onSubmit={(e) => {
@@ -205,27 +208,35 @@ export function ChatView({
               sendDraft();
             }}
           >
-            <div className="glass flex items-end gap-2 rounded-3xl border-2 border-primary/20 p-2 focus-within:border-primary/45 dark:border-primary/25">
-              <label htmlFor="composer" className="sr-only">
-                Message
-              </label>
-              <Textarea
-                id="composer"
-                rows={1}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    sendDraft();
-                  }
-                }}
-                placeholder={phase === "ready" ? "Ask for a change…" : "Add a detail…"}
-                className="max-h-40 min-h-10 flex-1 resize-none border-0 bg-transparent px-3 py-2 text-base shadow-none focus-visible:ring-0 sm:text-sm dark:bg-transparent"
-              />
-              <Button type="submit" size="icon" className="size-9 shrink-0 rounded-full" disabled={!draft.trim()} aria-label="Send">
-                <ArrowUp />
-              </Button>
+            <div>
+              <div className={cn(promptSurface, "flex items-end gap-1 p-2 pl-3")}>
+                <label htmlFor="composer" className="sr-only">
+                  Message
+                </label>
+                <Textarea
+                  id="composer"
+                  rows={1}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendDraft();
+                    }
+                  }}
+                  placeholder={phase === "ready" ? "Ask for a change to the plan…" : "Add a detail or ask a question…"}
+                  className="max-h-40 min-h-9 flex-1 resize-none border-0 bg-transparent px-1 py-2 text-base shadow-none focus-visible:ring-0 sm:text-sm dark:bg-transparent"
+                />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button type="button" variant="ghost" size="icon" className="size-9 shrink-0 rounded-xl text-muted-foreground" aria-label="Attach a file">
+                      <Paperclip />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Attach a file</TooltipContent>
+                </Tooltip>
+                <SendButton disabled={!draft.trim()} />
+              </div>
             </div>
           </form>
         </div>

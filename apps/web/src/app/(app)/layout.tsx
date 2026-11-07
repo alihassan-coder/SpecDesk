@@ -3,7 +3,6 @@ import { AppSidebar } from "@/components/app/app-sidebar";
 import { PageTitle } from "@/components/app/page-title";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Logo } from "@/components/brand/logo";
-import { Backdrop } from "@/components/landing/backdrop";
 import { Separator } from "@/components/ui/separator";
 import { Sidebar, SidebarHeader, SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,7 +26,6 @@ function SidebarFallback() {
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <SidebarProvider className="app-glass isolate">
-      <Backdrop fixed />
       <Suspense fallback={<SidebarFallback />}>
         <AppSidebar />
       </Suspense>

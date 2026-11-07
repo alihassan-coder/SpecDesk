@@ -94,6 +94,7 @@ Every milestone ends with a **review gate**: the user checks it, then we move on
 - Domain schema: users(ref), chats, messages, plans, plan_versions, files, bookings, leads, memories(ref).
 - Typed client generated from OpenAPI into `apps/web`.
 - **Done when:** API deployed to Vercel preview, migrations run on Neon branch.
+- **Status (2026-11-07):** done — FastAPI app (config, humanized errors, health + DB health, pricing engine + `POST /pricing/estimate`), SQLAlchemy models for all app tables, first Alembic migration applied to Neon main with `alembic check` clean. Open — typed OpenAPI client in `apps/web`, Vercel preview deploy, Neon branch per PR in CI.
 
 ### M3 — Auth & security
 - Better Auth (Email OTP via Resend + JWT plugin), sessions in Neon.

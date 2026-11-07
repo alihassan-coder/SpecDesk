@@ -4,7 +4,7 @@
 - **Better Auth** owns `user`, `session`, `account`, `verification`, `jwks`. It creates them with its own CLI
   (`pnpm dlx @better-auth/cli migrate`). Alembic **never** touches them.
 - **Alembic** (in `apps/api`) owns every app table in [DATA_MODEL.md](DATA_MODEL.md).
-- **Mem0** manages its own vector table(s) in pgvector. Alembic only runs `CREATE EXTENSION IF NOT EXISTS vector`.
+- **Mem0** manages its own vector table(s) in pgvector. Alembic only runs `CREATE EXTENSION IF NOT EXISTS vector` (added with the M4 Mem0 migration, not in the initial one).
 
 ## Connections
 | Env var | Use |

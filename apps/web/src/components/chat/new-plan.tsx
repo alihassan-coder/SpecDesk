@@ -11,7 +11,7 @@ export function NewPlan() {
     <div className="flex flex-1 items-center justify-center px-4 py-16">
       <div className="w-full max-w-2xl">
         <div className="mb-6 flex items-center justify-center gap-3">
-          <LogoMark className="size-10 rounded-xl" />
+          <LogoMark className="size-10 rounded-xl [&_svg]:size-6" />
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">What are you building?</h1>
         </div>
         <IdeaBox next={role === "guest" ? "login" : "chat"} />

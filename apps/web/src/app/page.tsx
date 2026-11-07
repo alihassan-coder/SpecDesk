@@ -1,4 +1,3 @@
-import { Backdrop } from "@/components/landing/backdrop";
 import { IdeaBox } from "@/components/landing/idea-box";
 import { PipelineDiagram } from "@/components/landing/pipeline-diagram";
 import { SiteHeader } from "@/components/landing/site-header";
@@ -6,7 +5,6 @@ import { SiteHeader } from "@/components/landing/site-header";
 export default function LandingPage() {
   return (
     <div className="relative isolate flex min-h-svh flex-col overflow-x-clip">
-      <Backdrop />
       <SiteHeader />
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 sm:px-6">

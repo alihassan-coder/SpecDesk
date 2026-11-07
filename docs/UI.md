@@ -12,7 +12,7 @@ SpecDesk uses the **stock shadcn/ui look** (style `radix-nova`, base colour neut
   Sidebar (`collapsible="icon"`, grouped nav, NavUser footer), Tabs, Badge, Empty, Spinner, Table, Dialog, Sheet.
   Don't hand-style what a shadcn component already does.
 - **Layout:** ChatGPT-like app shell — sidebar · centred conversation (`--chat-width`) · artifact panel on the right.
-- **Logo:** blue rounded square with a spec-sheet glyph (folded corner + check). `src/components/brand/logo.tsx`, favicon `src/app/icon.svg`.
+- **Logo:** prism cube (three shaded faces) on a glossy gradient tile that follows `--primary`. `src/components/brand/logo.tsx`, favicon `src/app/icon.svg`.
 - **Glass (macOS-style):** `.glass` utility in globals.css (frosted, blur + saturate, inner highlight; light + dark). Needs colour behind it — `GlassBackdrop` (soft theme-colour blobs). Used on the landing page: header, idea box, workflow windows.
 - **Landing:** headline + one line + Tempo-style prompt box with chips, a divider, then the static pipeline SVG. No duplicate CTAs, no decorative blobs (one faint top glow), no "AI" sparkle icons.
 - **Distinctiveness lives in the product** (question rounds, agent timeline, scope switches, versions), not in custom styling.

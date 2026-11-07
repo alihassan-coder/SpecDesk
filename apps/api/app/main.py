@@ -1,10 +1,43 @@
-"""SpecDesk API entrypoint. Real routers arrive in M2+ (see docs/API.md)."""
+"""SpecDesk API entrypoint. No startup work (migrations are a deploy step): serverless-safe."""
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="SpecDesk API", version="0.1.0")
+from app.core.config import get_settings
+from app.core.errors import ErrorBody, install_error_handlers
+from app.routers import chats, health, pricing
+
+API_PREFIX = "/api/v1"
 
 
-@app.get("/api/v1/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def create_app() -> FastAPI:
+    settings = get_settings()
+    app = FastAPI(
+        title="SpecDesk API",
+        version="0.2.0",
+        openapi_url=f"{API_PREFIX}/openapi.json",
+        docs_url=f"{API_PREFIX}/docs",
+        redoc_url=None,
+        responses={
+            "4XX": {"model": ErrorBody, "description": "Humanized error"},
+            "5XX": {"model": ErrorBody, "description": "Humanized error"},
+        },
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    install_error_handlers(app)
+
+    api = APIRouter(prefix=API_PREFIX)
+    api.include_router(health.router)
+    api.include_router(pricing.router)
+    api.include_router(chats.router)
+    app.include_router(api)
+    return app
+
+
+app = create_app()

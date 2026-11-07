@@ -60,7 +60,7 @@
   --font-body: var(--font-geist-sans);
   --chat-width: 768px;
 
-  --background: oklch(1 0 0);
+  --background: oklch(0.985 0.002 260);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -77,8 +77,8 @@
   --destructive: oklch(0.577 0.245 27.325);
   --success: oklch(0.627 0.17 149.214);
   --warning: oklch(0.769 0.165 70.08);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --border: oklch(0.91 0.004 260);
+  --input: oklch(0.91 0.004 260);
   --ring: oklch(0.546 0.245 262.881);
   --chart-1: oklch(0.546 0.245 262.881);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -190,6 +190,207 @@
 .dark .btn-tactile-neutral:hover {
   background-image: linear-gradient(to bottom, rgb(255 255 255 / 0.13), rgb(255 255 255 / 0.06));
 }
+
+/* Disabled primary buttons go flat */
+.btn-tactile-primary:disabled {
+  background-image: none;
+  border-color: transparent;
+}
+
+/* Prompt beam — a colourful light travelling along the bottom edge of the first prompt box.
+   Ported from the reference's beam effect: border light (::after), inner glow (::before), bloom spikes ([data-beam-bloom]). */
+@property --beam-x { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --beam-w { syntax: "<number>"; inherits: true; initial-value: 1; }
+@property --beam-h { syntax: "<number>"; inherits: true; initial-value: 1; }
+@property --beam-spike { syntax: "<number>"; inherits: true; initial-value: 1; }
+@property --beam-spike2 { syntax: "<number>"; inherits: true; initial-value: 1; }
+@property --beam-edge { syntax: "<number>"; inherits: true; initial-value: 1; }
+@property --beam-opacity { syntax: "<number>"; inherits: true; initial-value: 0; }
+
+[data-beam] {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--beam-radius);
+  --beam-radius: 1rem;
+  --beam-strength: 0.9;
+  --beam-bright: 1;
+  --beam-sat: 1.5;
+  animation:
+    beam-travel 5.8s linear infinite,
+    beam-edge-fade 5.8s linear infinite,
+    beam-breathe 7.5s ease-in-out infinite,
+    beam-spike 7.7s ease-in-out infinite,
+    beam-spike2 9.9s ease-in-out infinite,
+    beam-fade-in 0.6s ease forwards;
+}
+
+.dark [data-beam] {
+  --beam-strength: 0.7;
+  --beam-bright: 1.3;
+  --beam-sat: 1.2;
+}
+
+/* Second, faster beam wrapped around the first (the reference stacks two). */
+[data-beam="outer"] {
+  --beam-strength: 1;
+  animation:
+    beam-travel 5.1s linear infinite,
+    beam-edge-fade 5.1s linear infinite,
+    beam-breathe 6.6s ease-in-out infinite,
+    beam-spike 6.8s ease-in-out infinite,
+    beam-spike2 8.7s ease-in-out infinite,
+    beam-fade-in 0.6s ease forwards;
+}
+.dark [data-beam="outer"] { --beam-strength: 0.9; }
+
+/* border light */
+[data-beam]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: var(--beam-radius);
+  pointer-events: none;
+  z-index: 2;
+  background:
+    radial-gradient(ellipse calc(24px * var(--beam-w)) calc(28px * var(--beam-h)) at calc(var(--beam-x) * 100%) calc(100% + 2px), rgb(255 255 255 / 0.38) 0%, rgb(255 255 255 / 0.12) 30%, transparent 65%),
+    radial-gradient(ellipse calc(36px * var(--beam-w)) calc(36px * var(--beam-h)) at calc(var(--beam-x) * 100%) calc(100% + 2px), rgb(255 50 100), transparent),
+    radial-gradient(ellipse calc(30px * var(--beam-w)) calc(32px * var(--beam-h)) at calc(var(--beam-x) * 100% + 39px) 100%, rgb(40 180 220), transparent),
+    radial-gradient(ellipse calc(33px * var(--beam-w)) calc(28px * var(--beam-h)) at calc(var(--beam-x) * 100% - 36px) calc(100% + 2px), rgb(50 200 80), transparent),
+    radial-gradient(ellipse calc(29px * var(--beam-w)) calc(34px * var(--beam-h)) at calc(var(--beam-x) * 100% - 54px) 100%, rgb(180 40 240), transparent),
+    radial-gradient(ellipse calc(27px * var(--beam-w)) calc(30px * var(--beam-h)) at calc(var(--beam-x) * 100% + 51px) calc(100% - 1px), rgb(255 160 30), transparent),
+    radial-gradient(ellipse calc(36px * var(--beam-w)) calc(24px * var(--beam-h)) at calc(var(--beam-x) * 100% + 21px) calc(100% + 1px), rgb(100 70 255), transparent),
+    radial-gradient(ellipse calc(30px * var(--beam-w)) calc(22px * var(--beam-h)) at calc(var(--beam-x) * 100% - 21px) 100%, rgb(40 140 255), transparent),
+    radial-gradient(ellipse calc(25px * var(--beam-w)) calc(28px * var(--beam-h)) at calc(var(--beam-x) * 100% + 66px) calc(100% + 1px), rgb(240 50 180), transparent),
+    radial-gradient(ellipse calc(23px * var(--beam-w)) calc(30px * var(--beam-h)) at calc(var(--beam-x) * 100% - 66px) calc(100% - 1px), rgb(30 185 170), transparent);
+  -webkit-mask:
+    radial-gradient(ellipse calc(78px * var(--beam-w)) calc(60px * var(--beam-h)) at calc(var(--beam-x) * 100%) 100%, #fff 0%, rgb(255 255 255 / 0.5) 45%, transparent 100%),
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: source-in, xor;
+  mask:
+    radial-gradient(ellipse calc(78px * var(--beam-w)) calc(60px * var(--beam-h)) at calc(var(--beam-x) * 100%) 100%, #fff 0%, rgb(255 255 255 / 0.5) 45%, transparent 100%),
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: intersect, exclude;
+  opacity: calc(var(--beam-opacity) * var(--beam-edge) * 1.14 * var(--beam-strength));
+  animation: beam-hue-shift 12s ease-in-out infinite;
+}
+
+/* inner glow along the bottom edge */
+[data-beam]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--beam-radius);
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse calc(33px * var(--beam-w)) calc(30px * var(--beam-h)) at calc(var(--beam-x) * 100%) 100%, rgb(255 50 100 / 0.48), transparent),
+    radial-gradient(ellipse calc(24px * var(--beam-w)) calc(26px * var(--beam-h)) at calc(var(--beam-x) * 100% + 39px) calc(100% - 3px), rgb(40 180 220 / 0.42), transparent),
+    radial-gradient(ellipse calc(27px * var(--beam-w)) calc(24px * var(--beam-h)) at calc(var(--beam-x) * 100% - 36px) 100%, rgb(50 200 80 / 0.48), transparent),
+    radial-gradient(ellipse calc(23px * var(--beam-w)) calc(28px * var(--beam-h)) at calc(var(--beam-x) * 100% - 54px) calc(100% - 2px), rgb(180 40 240 / 0.42), transparent),
+    radial-gradient(ellipse calc(24px * var(--beam-w)) calc(24px * var(--beam-h)) at calc(var(--beam-x) * 100% + 51px) calc(100% - 1px), rgb(255 160 30 / 0.5), transparent),
+    radial-gradient(ellipse calc(30px * var(--beam-w)) calc(20px * var(--beam-h)) at calc(var(--beam-x) * 100% + 21px) 100%, rgb(100 70 255 / 0.45), transparent),
+    radial-gradient(ellipse calc(25px * var(--beam-w)) calc(18px * var(--beam-h)) at calc(var(--beam-x) * 100% - 21px) calc(100% - 2px), rgb(40 140 255 / 0.4), transparent),
+    radial-gradient(ellipse calc(21px * var(--beam-w)) calc(24px * var(--beam-h)) at calc(var(--beam-x) * 100% + 66px) 100%, rgb(240 50 180 / 0.45), transparent),
+    radial-gradient(ellipse calc(18px * var(--beam-w)) calc(26px * var(--beam-h)) at calc(var(--beam-x) * 100% - 66px) calc(100% - 1px), rgb(30 185 170 / 0.52), transparent);
+  box-shadow: inset 0 0 9px 1px rgb(255 255 255 / 0.1);
+  -webkit-mask:
+    radial-gradient(ellipse calc(78px * var(--beam-w)) calc(60px * var(--beam-h)) at calc(var(--beam-x) * 100%) 100%, #fff 0%, rgb(255 255 255 / 0.5) 45%, transparent 100%),
+    linear-gradient(#fff, transparent 28px, transparent calc(100% - 28px), #fff),
+    linear-gradient(to right, #fff, transparent 28px, transparent calc(100% - 28px), #fff);
+  -webkit-mask-composite: source-in, source-over;
+  mask:
+    radial-gradient(ellipse calc(78px * var(--beam-w)) calc(60px * var(--beam-h)) at calc(var(--beam-x) * 100%) 100%, #fff 0%, rgb(255 255 255 / 0.5) 45%, transparent 100%),
+    linear-gradient(#fff, transparent 28px, transparent calc(100% - 28px), #fff),
+    linear-gradient(to right, #fff, transparent 28px, transparent calc(100% - 28px), #fff);
+  mask-composite: intersect, add;
+  opacity: calc(var(--beam-opacity) * var(--beam-edge) * 0.7 * var(--beam-strength));
+  animation: beam-hue-shift 12s ease-in-out infinite;
+}
+
+/* bloom: thin colour spikes + white core, blurred */
+[data-beam] > [data-beam-bloom] {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--beam-radius);
+  pointer-events: none;
+  z-index: 3;
+  background:
+    radial-gradient(ellipse calc(0.8px * var(--beam-spike)) calc(92px * var(--beam-h)) at 8% calc(100% - 2px), rgb(255 60 80), rgb(255 60 80) 30%, transparent 88%),
+    radial-gradient(ellipse calc(10px * var(--beam-spike2)) calc(35px * var(--beam-h)) at 22% calc(100% - 4px), rgb(40 190 180 / 0.98), rgb(40 190 180 / 0.49) 50%, transparent 95%),
+    radial-gradient(ellipse calc(2px * (2 - var(--beam-spike))) calc(72px * var(--beam-h)) at 36% calc(100% - 3px), rgb(100 70 255), rgb(100 70 255) 40%, transparent 90%),
+    radial-gradient(ellipse calc(14px * var(--beam-spike2)) calc(28px * var(--beam-h)) at 50% calc(100% - 2px), rgb(255 170 40 / 0.59), rgb(255 170 40 / 0.29) 55%, transparent 96%),
+    radial-gradient(ellipse calc(1.2px * (2 - var(--beam-spike2))) calc(85px * var(--beam-h)) at 64% calc(100% - 4px), rgb(50 200 100), rgb(50 200 100) 35%, transparent 89%),
+    radial-gradient(ellipse calc(7px * var(--beam-spike)) calc(45px * var(--beam-h)) at 78% calc(100% - 2px), rgb(200 50 240 / 0.91), rgb(200 50 240 / 0.45) 48%, transparent 94%),
+    radial-gradient(ellipse calc(0.6px * (2 - var(--beam-spike))) calc(60px * var(--beam-h)) at 92% calc(100% - 3px), rgb(40 140 255), rgb(40 140 255) 42%, transparent 91%),
+    radial-gradient(ellipse calc(21px * var(--beam-spike)) calc(15px * var(--beam-spike2)) at calc(var(--beam-x) * 100%) calc(100% + 1px), #fff 0%, rgb(255 255 255 / 0.9) 20%, rgb(255 255 255 / 0.5) 50%, transparent 100%),
+    radial-gradient(ellipse calc(42px * var(--beam-w)) calc(40px * var(--beam-h)) at calc(var(--beam-x) * 100%) 100%, rgb(255 255 255 / 0.3) 0%, rgb(255 255 255 / 0.12) 25%, rgb(255 255 255 / 0.03) 55%, transparent 80%);
+  -webkit-mask: radial-gradient(ellipse calc(56px * var(--beam-w)) calc(78px * var(--beam-h)) at calc(var(--beam-x) * 100%) 100%, #fff 0%, rgb(255 255 255 / 0.5) 35%, transparent 100%);
+  mask: radial-gradient(ellipse calc(56px * var(--beam-w)) calc(78px * var(--beam-h)) at calc(var(--beam-x) * 100%) 100%, #fff 0%, rgb(255 255 255 / 0.5) 35%, transparent 100%);
+  opacity: calc(var(--beam-opacity) * var(--beam-edge) * 0.8 * var(--beam-strength));
+  animation: beam-hue-shift-bloom 8s ease-in-out infinite;
+}
+
+@keyframes beam-travel {
+  0% { --beam-x: 0.06; --beam-w: 0.5; }
+  10% { --beam-x: 0.15; --beam-w: 0.8; }
+  20% { --beam-x: 0.25; --beam-w: 1.1; }
+  30% { --beam-x: 0.35; --beam-w: 1.3; }
+  40% { --beam-x: 0.44; --beam-w: 1.45; }
+  50% { --beam-x: 0.5; --beam-w: 1.5; }
+  60% { --beam-x: 0.56; --beam-w: 1.45; }
+  70% { --beam-x: 0.65; --beam-w: 1.3; }
+  80% { --beam-x: 0.75; --beam-w: 1.1; }
+  90% { --beam-x: 0.85; --beam-w: 0.8; }
+  100% { --beam-x: 0.94; --beam-w: 0.5; }
+}
+@keyframes beam-edge-fade {
+  0%, 12.5% { --beam-edge: 0; }
+  32.5%, 67.5% { --beam-edge: 1; }
+  87.5%, 100% { --beam-edge: 0; }
+}
+@keyframes beam-breathe {
+  0%, 100% { --beam-h: 0.8; }
+  25% { --beam-h: 1.25; }
+  55% { --beam-h: 0.85; }
+  80% { --beam-h: 1.3; }
+}
+@keyframes beam-spike {
+  0%, 100% { --beam-spike: 0.8; }
+  25% { --beam-spike: 1.3; }
+  50% { --beam-spike: 0.9; }
+  75% { --beam-spike: 1.4; }
+}
+@keyframes beam-spike2 {
+  0%, 100% { --beam-spike2: 1.2; }
+  25% { --beam-spike2: 0.7; }
+  50% { --beam-spike2: 1.4; }
+  75% { --beam-spike2: 0.8; }
+}
+@keyframes beam-fade-in {
+  100% { --beam-opacity: 1; }
+}
+@keyframes beam-hue-shift {
+  0%, 100% { filter: hue-rotate(-13deg) brightness(var(--beam-bright)) saturate(var(--beam-sat)); }
+  50% { filter: hue-rotate(13deg) brightness(var(--beam-bright)) saturate(var(--beam-sat)); }
+}
+@keyframes beam-hue-shift-bloom {
+  0%, 100% { filter: blur(8px) hue-rotate(-23deg) brightness(var(--beam-bright)) saturate(var(--beam-sat)); }
+  50% { filter: blur(8px) hue-rotate(23deg) brightness(var(--beam-bright)) saturate(var(--beam-sat)); }
+}
+
+/* Reduced motion (OS setting or Settings → Reduce motion): keep the light, stop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  [data-beam], [data-beam]::before, [data-beam]::after, [data-beam] > [data-beam-bloom] { animation: none !important; }
+  [data-beam] { --beam-x: 0.5; --beam-w: 1.5; --beam-opacity: 1; --beam-edge: 1; }
+}
+[data-reduce-motion="true"] [data-beam],
+[data-reduce-motion="true"] [data-beam]::before,
+[data-reduce-motion="true"] [data-beam]::after,
+[data-reduce-motion="true"] [data-beam] > [data-beam-bloom] { animation: none !important; }
+[data-reduce-motion="true"] [data-beam] { --beam-x: 0.5; --beam-w: 1.5; --beam-opacity: 1; --beam-edge: 1; }
 
 /* App shell: frosted sidebar over the backdrop */
 .app-glass [data-slot="sidebar-inner"] {

@@ -1,9 +1,25 @@
 [project]
 name = "specdesk-api"
-version = "0.1.0"
+version = "0.2.0"
 description = "SpecDesk backend: agent pipeline, pricing, files"
 requires-python = ">=3.12"
-dependencies = []  # added in M2 with `uv add` (fastapi, pydantic-settings, sqlalchemy, alembic, litellm, mem0ai, weasyprint ...)
+dependencies = [
+    "alembic>=1.20.1",
+    "cryptography>=50.0.2",
+    "fastapi>=0.162.0",
+    "langchain>=1.4.9",
+    "langchain-anthropic>=1.7.10",
+    "langchain-core>=1.7.6",
+    "langgraph>=1.2.20",
+    "langgraph-checkpoint-postgres>=3.2.0",
+    "langsmith>=0.14.17",
+    "psycopg-pool>=3.3.3",
+    "psycopg[binary]>=3.3.8",
+    "pydantic-settings>=2.16.2",
+    "pyyaml>=6.0.3",
+    "sqlalchemy>=2",
+    "uvicorn[standard]>=0.54.0",
+]
 
 [tool.ruff]
 line-length = 100
@@ -14,3 +30,19 @@ select = ["E", "F", "I", "B", "UP", "SIM", "ASYNC"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16.0",
+    "pyright>=1.1.414",
+    "pytest>=9.2.0",
+    "ruff>=0.17.4",
+    "types-pyyaml>=6.0.12.20261103",
+]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+include = ["app", "tests", "migrations"]
+venvPath = "."
+venv = ".venv"
