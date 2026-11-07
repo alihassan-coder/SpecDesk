@@ -20,8 +20,16 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm exec next typegen # route types tsc needs (normally made by dev/build)
       - run: pnpm exec tsc --noEmit
       - run: pnpm build
+        env:
+          # Placeholders so the build can load its config. CI never talks to a real database,
+          # email or AI provider; real values live in Vercel's environment settings.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          BETTER_AUTH_SECRET: ci-only-placeholder-secret-not-used-anywhere
+          BETTER_AUTH_URL: http://localhost:3000
+          API_URL: http://localhost:8000
 
   api:
     runs-on: ubuntu-latest
@@ -33,6 +41,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: uv sync
       - run: uv run ruff check .
-      - run: uv run pytest
-        # enabled once tests exist (M2)
-        continue-on-error: true
+      - run: uv run ruff format --check .
+      - run: uv run pyright
+      # Tests that need the Neon dev database skip themselves when DATABASE_URL isn't set.
+      - run: uv run pytest -q

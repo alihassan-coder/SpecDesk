@@ -7,5 +7,6 @@
     "dev:api": "cd apps/api && uv run uvicorn app.main:app --reload --port 8000",
     "build:web": "pnpm --filter web build",
     "lint:web": "pnpm --filter web lint"
-  }
+  },
+  "packageManager": "pnpm@12.14.0"
 }
