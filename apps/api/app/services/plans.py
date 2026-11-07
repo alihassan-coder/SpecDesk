@@ -9,7 +9,13 @@ from sqlalchemy.orm import Session
 from app.agents.planner.assemble import fit_phases
 from app.db.models import Chat, Message, Plan, PlanVersion
 from app.services.plan_files import build_files, human_size, preview
-from app.services.pricing import FeatureInput, PricingEngine, load_pricing_config
+from app.services.pricing import (
+    FeatureInput,
+    PricingEngine,
+    as_size,
+    duration_label,
+    load_pricing_config,
+)
 
 Json = dict[str, Any]
 
@@ -53,8 +59,12 @@ def save_scope_change(
         {**f, "included": included.get(f["id"], f["included"])} for f in data.get("features", [])
     ]
     engine = PricingEngine(load_pricing_config())
+    size = as_size(data.get("size"))
     totals = engine.estimate(
-        [FeatureInput(f["complexity"], int(f["hours"]), bool(f["included"])) for f in features]
+        [FeatureInput(f["complexity"], int(f["hours"]), bool(f["included"])) for f in features],
+        hourly_rate=float(data.get("hourlyRate") or engine.config.hourly_rate),
+        buffer=float(data["buffer"]) if "buffer" in data else None,
+        size=size,
     )
     data["features"] = features
     data["phases"] = fit_phases(data.get("phases", []), totals.weeks)
@@ -64,6 +74,8 @@ def save_scope_change(
         "priceMin": totals.price_min,
         "priceMax": totals.price_max,
         "weeks": totals.weeks,
+        "days": totals.days,
+        "duration": duration_label(totals.weeks, totals.days),
     }
     last = session.scalars(
         select(PlanVersion.number)

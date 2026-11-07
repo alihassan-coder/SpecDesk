@@ -26,7 +26,7 @@ class Analysis(BaseModel):
     goals: list[str] = Field(description="2-5 measurable goals for the first version")
     constraints: list[str] = Field(description="Hard limits: platforms, rules, budget, deadlines")
     assumptions: list[str] = Field(description="Things you assumed because nobody said otherwise")
-    size: Literal["small", "medium", "large"] = Field(
+    size: Literal["tiny", "small", "medium", "large"] = Field(
         default="medium", description="How big the first version is (see the instructions)"
     )
 

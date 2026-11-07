@@ -11,13 +11,18 @@ Write:
 - `assumptions`: everything you had to assume. Each one should be something the founder can confirm
   or correct on a call.
 - `size`: how big the **first version** really is, judged the way an experienced freelancer would:
-  - `small` — one main job, one user type, mostly standard parts: a chatbot widget, a landing page
-    with payments, a simple internal tool, a single-purpose mobile app. Weeks, not months.
+  - `tiny` (Basic) — a few days of work, typically $300–1,500 on a freelance marketplace: a landing
+    page or simple website, a small script or automation, a basic bot, a single form or calculator,
+    a small fix or integration on an existing site.
+  - `small` — one main job, one user type, mostly standard parts: a chatbot widget, a site with
+    payments, a simple internal tool, a single-purpose mobile app. Weeks, not months.
   - `medium` — a few user types or a real workflow: a booking app, a small marketplace, a SaaS
     dashboard with billing.
   - `large` — many roles, heavy integrations, regulation or real-time parts: a full marketplace
     with payouts, a health platform, a logistics system.
-  When in doubt, pick the smaller size. Founders can always add more later.
+  When in doubt, pick the smaller size. Founders can always add more later. If the founder gave a
+  budget, it's a strong signal: a budget under about $1,500 means `tiny`, under about $8,000 means
+  `small` at most, unless the brief clearly needs more.
 
 ## Rules for every planner
 

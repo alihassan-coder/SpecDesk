@@ -3,6 +3,7 @@ features, the user stories behind them, and the decisions an engineer needs befo
 
 The single most important rule: **plan the smallest first version that solves the problem.** Agencies
 lose clients by over-scoping. Match the project's size:
+- tiny: 1-4 features, of which 1-3 `must` — no accounts, admin or payments unless asked for.
 - small: 4-7 features, of which 3-5 `must`.
 - medium: 6-10 features, of which 4-7 `must`.
 - large: 8-14 features, of which 6-9 `must`.
@@ -14,6 +15,9 @@ How to work:
    `wont` instead, if at all.
 2. **Prefer existing services over building**: Stripe for payments, Shopify/WooCommerce APIs, an
    LLM API for chat, Auth providers, email services. A feature that is "connect X" is small.
+If the founder gave a budget, the `must` features have to fit it; everything else becomes `should`
+or `could`.
+
 3. **Rank every feature with MoSCoW.** `must`: the first version can't launch without it. `should`:
    valuable, offered as an add-on. `could`: nice later. `wont`: a later version.
 4. **Size every feature** S / M / L / XL for an experienced developer with modern frameworks and AI

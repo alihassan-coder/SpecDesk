@@ -14,7 +14,7 @@ from langgraph.runtime import Runtime
 from pydantic import BaseModel
 
 from app.agents.llm.ask import AskModel
-from app.agents.planner.assemble import HOUR_BUDGETS, assemble_plan
+from app.agents.planner.assemble import assemble_plan, hour_budgets
 from app.agents.planner.schemas import (
     Analysis,
     Backlog,
@@ -32,6 +32,7 @@ Json = dict[str, Any]
 class PlanState(TypedDict, total=False):
     idea: Required[str]
     brief: Required[str]
+    hints: dict[str, str]  # the founder's prompt-box choices: platform, budget
     analysis: Json
     product: Json
     stack: Json
@@ -85,7 +86,7 @@ def analyst(state: PlanState, runtime: Runtime[PlanContext]) -> Json:
         Analysis,
         state,
         runtime,
-        uses=[],
+        uses=["hints"],
         task="Write the analysis for this product.",
         note=lambda a: a.one_liner,
     )
@@ -94,7 +95,8 @@ def analyst(state: PlanState, runtime: Runtime[PlanContext]) -> Json:
 
 def _budget(state: PlanState) -> str:
     size = str((state.get("analysis") or {}).get("size") or "medium")
-    low, high = HOUR_BUDGETS.get(size, HOUR_BUDGETS["medium"])
+    budgets = hour_budgets()
+    low, high = budgets.get(size, budgets["medium"])
     return f"Project size: {size}. Budget for the must features: {low}-{high} hours in total."
 
 
@@ -108,7 +110,7 @@ def product(state: PlanState, runtime: Runtime[PlanContext]) -> Json:
         ProductSpec,
         state,
         runtime,
-        uses=["analysis"],
+        uses=["hints", "analysis"],
         task=f"Write the product spec. {_budget(state)}",
         note=note,
     )
@@ -160,7 +162,7 @@ def estimator(state: PlanState, runtime: Runtime[PlanContext]) -> Json:
         EstimatePlan,
         scoped,
         runtime,
-        uses=["analysis", "product"],
+        uses=["hints", "analysis", "product"],
         task=f"Estimate hours for every feature id, then the phases and the team. {_budget(state)}",
         note=lambda e: f"About {sum(f.hours for f in e.features)} hours of feature work.",
     )

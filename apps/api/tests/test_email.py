@@ -41,7 +41,7 @@ def _send(settings: Settings) -> None:
         "PhysioFlow",
         "https://specdesk.test/plan/123",
         "$12,000 – $18,000",
-        8,
+        "8 weeks",
         settings=settings,
     )
 

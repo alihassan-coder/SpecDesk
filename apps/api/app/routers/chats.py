@@ -427,7 +427,10 @@ def build_plan(
         if "plan" not in snapshot.values:
             chat.status = "generating"
             session.commit()
+            interview_start, _ = _start_settings(session, chat)
             start: PlanState = {"idea": chat.idea, "brief": brief}
+            if hints := interview_start.get("hints"):
+                start["hints"] = hints
             ok = yield from planning_events(
                 graph,
                 None if snapshot.next else start,  # retry continues from the failed step
@@ -465,7 +468,13 @@ def _email_plan_ready(to: str, plan_id: uuid.UUID, data: dict[str, Any]) -> None
     url = f"{get_settings().web_url.rstrip('/')}/plan/{plan_id}"
     threading.Thread(
         target=send_plan_ready,
-        args=(to, str(data.get("title") or "Your plan"), url, price, int(est.get("weeks", 0))),
+        args=(
+            to,
+            str(data.get("title") or "Your plan"),
+            url,
+            price,
+            str(est.get("duration") or f"{int(est.get('weeks', 0))} weeks"),
+        ),
         daemon=True,
     ).start()
 

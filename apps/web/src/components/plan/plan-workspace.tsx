@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Feature, Moscow, Plan, PlanVersion } from "@/mocks/types";
 import { formatMoney, formatRange } from "@/lib/format";
-import { estimate, priceBreakdown, type PriceBreakdown } from "@/lib/pricing";
+import { HOURS_PER_DAY, estimate, formatDuration, priceBreakdown, type PriceBreakdown } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import { Wireframe } from "./wireframe";
 
@@ -123,7 +123,14 @@ export function PlanWorkspace({
       {/* Header */}
       <div className="flex flex-col gap-6 border-b pb-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">{latest.label}</p>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <span>{latest.label}</span>
+            {plan.sizeLabel && (
+              <Badge variant="secondary" className="font-normal">
+                {plan.sizeLabel} project
+              </Badge>
+            )}
+          </div>
           <h1 className="mt-1 text-4xl font-semibold">{plan.title}</h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">{plan.oneLiner}</p>
         </div>
@@ -162,8 +169,11 @@ export function PlanWorkspace({
       {/* Live numbers */}
       <div className="sticky top-14 z-10 -mx-4 border-b bg-background/90 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6">
         <dl className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Stat label="Price range" value={formatRange(live.priceMin, live.priceMax)} delta={dirty ? signedMoney(live.priceMax - saved.priceMax) : undefined} up={live.priceMax > saved.priceMax} />
-          <Stat label="Timeline" value={`${live.weeks} weeks`} delta={dirty ? signedWeeks(live.weeks - saved.weeks) : undefined} up={live.weeks > saved.weeks} />
+          <div>
+            <Stat label="Price range" value={formatRange(live.priceMin, live.priceMax)} delta={dirty ? signedMoney(live.priceMax - saved.priceMax) : undefined} up={live.priceMax > saved.priceMax} />
+            <BudgetFit budget={plan.budget} priceMin={live.priceMin} />
+          </div>
+          <Stat label="Timeline" value={formatDuration(live)} delta={dirty ? signedWeeks(live.weeks - saved.weeks) : undefined} up={live.weeks > saved.weeks} />
           <Stat label="Effort" value={`${live.hours} hours`} sub={`incl. ${Math.round(plan.buffer * 100)}% buffer`} />
           <div>
             <dt className="text-xs text-muted-foreground">Readiness</dt>
@@ -396,6 +406,19 @@ export function PlanWorkspace({
 
 const TOP_FEATURES = 8;
 
+/** One line under the price: does the current scope fit the founder's slider budget? */
+function BudgetFit({ budget, priceMin }: { budget?: Plan["budget"]; priceMin: number }) {
+  if (!budget || budget.openEnded) return null;
+  const over = priceMin - budget.amount;
+  return over <= 0 ? (
+    <p className="mt-1 text-xs text-success">Fits your budget ({budget.label.toLowerCase()})</p>
+  ) : (
+    <p className="mt-1 text-xs text-destructive">
+      About {formatMoney(over)} over your budget — switch off a feature to fit
+    </p>
+  );
+}
+
 /** "Why this price": the same steps `estimate()` takes, updated live as features are toggled. */
 function PriceBreakdownCard({ b }: { b: PriceBreakdown }) {
   const shown = b.features.slice(0, TOP_FEATURES);
@@ -428,19 +451,27 @@ function PriceBreakdownCard({ b }: { b: PriceBreakdown }) {
               <p className="text-xs text-muted-foreground">How it adds up</p>
               <ul className="mt-2 space-y-1">
                 <BreakdownRow label="Features" value={`${b.featureHours} h`} />
-                <BreakdownRow label="Setup, design system, QA" value={`+ ${b.baseHours} h`} />
+                <BreakdownRow label="Setup, deploy, QA" value={`+ ${b.baseHours} h`} />
                 <BreakdownRow label={`Risk buffer (${pct(b.buffer)})`} value={`× ${(1 + b.buffer).toFixed(2)}`} />
                 <BreakdownRow label="Total effort" value={`${b.hours} h`} strong />
                 <BreakdownRow label={`× ${formatMoney(b.hourlyRate)} per hour`} value={formatMoney(b.midpoint)} />
                 <BreakdownRow label={`± ${pct(b.spread)} range`} value={formatRange(b.priceMin, b.priceMax)} strong />
-                <BreakdownRow
-                  label={`÷ ${b.hoursPerWeek} h/week × ${b.teamSize} people`}
-                  value={`${b.weeks} weeks`}
-                  strong
-                />
+                {b.days <= 5 ? (
+                  <BreakdownRow
+                    label={`÷ ${HOURS_PER_DAY} h/day × ${b.teamSize} ${b.teamSize === 1 ? "developer" : "people"}`}
+                    value={formatDuration(b)}
+                    strong
+                  />
+                ) : (
+                  <BreakdownRow
+                    label={`÷ ${b.hoursPerWeek} h/week × ${b.teamSize} ${b.teamSize === 1 ? "developer" : "people"}`}
+                    value={formatDuration(b)}
+                    strong
+                  />
+                )}
               </ul>
-              {rawWeeks < b.minWeeks && (
-                <p className="mt-2 text-xs text-muted-foreground">Every build gets at least {b.minWeeks} weeks.</p>
+              {b.days > 5 && rawWeeks < b.minWeeks && (
+                <p className="mt-2 text-xs text-muted-foreground">Every build gets at least {b.minWeeks} week.</p>
               )}
             </section>
           </CardContent>

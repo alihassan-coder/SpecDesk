@@ -4,23 +4,31 @@ Output is camelCase JSON matching the web `Plan` type (apps/web/src/mocks/types.
 extra keys the file generators use (`spec`, `flow`, `backlog`, `goals`, `constraints`, `estimate`).
 """
 
+import re
 from collections.abc import Mapping
 from typing import Any
 from urllib.parse import quote_plus
 
-from app.services.pricing import FeatureInput, PricingEngine, load_pricing_config
+from app.services.pricing import (
+    FeatureInput,
+    PricingEngine,
+    Size,
+    as_size,
+    duration_label,
+    load_pricing_config,
+)
 
 Json = dict[str, Any]
 
 # Only `must` features are in the quoted price; `should` ones are offered as add-ons (toggle on).
 IN_FIRST_VERSION = {"must"}
 
-# Total hours for the must features, by project size — freelance-market ranges (DECISIONS.md).
-HOUR_BUDGETS: dict[str, tuple[int, int]] = {
-    "small": (40, 150),
-    "medium": (150, 400),
-    "large": (400, 900),
-}
+
+def hour_budgets() -> dict[str, tuple[int, int]]:
+    """Must-feature hour budget per project size, from pricing.yaml (freelance-market ranges)."""
+    return {name: tier.must_hours for name, tier in load_pricing_config().sizes.items()}
+
+
 # The estimator's must hours may exceed the budget by this much before they're scaled down.
 BUDGET_SLACK = 1.2
 
@@ -36,12 +44,13 @@ def assemble_plan(state: Mapping[str, Any], engine: PricingEngine | None = None)
     critique: Json = state.get("critique") or {}
 
     features = _features(product.get("features", []), estimate.get("features", []), engine)
-    size = str(analysis.get("size") or "medium")
-    trimmed = _fit_budget(features, HOUR_BUDGETS.get(size, HOUR_BUDGETS["medium"])[1])
-    totals = engine.estimate(
-        [FeatureInput(f["complexity"], f["hours"], f["included"]) for f in features]
-    )
     config = engine.config
+    size: Size = as_size(analysis.get("size")) or "medium"
+    tier = config.sizes[size]
+    trimmed = _fit_budget(features, tier.must_hours[1])
+    totals = engine.estimate(
+        [FeatureInput(f["complexity"], f["hours"], f["included"]) for f in features], size=size
+    )
 
     return {
         "id": "",  # filled in when the plan is read
@@ -51,7 +60,11 @@ def assemble_plan(state: Mapping[str, Any], engine: PricingEngine | None = None)
         "audience": analysis.get("audience", []),
         "goals": analysis.get("goals", []),
         "constraints": analysis.get("constraints", []),
+        "budget": founder_budget(state.get("hints") or {}),
         "size": size,
+        "sizeLabel": tier.label,
+        "baseHours": tier.base_hours,
+        "teamSize": tier.team_size,
         "assumptions": [
             *analysis.get("assumptions", []),
             *(
@@ -75,7 +88,7 @@ def assemble_plan(state: Mapping[str, Any], engine: PricingEngine | None = None)
         "phases": fit_phases(estimate.get("phases", []), totals.weeks),
         "team": estimate.get("team", []),
         "hourlyRate": config.hourly_rate,
-        "buffer": config.buffer,
+        "buffer": tier.buffer,
         "risks": critique.get("risks", []),
         "competitors": [
             {
@@ -107,6 +120,8 @@ def assemble_plan(state: Mapping[str, Any], engine: PricingEngine | None = None)
             "priceMin": totals.price_min,
             "priceMax": totals.price_max,
             "weeks": totals.weeks,
+            "days": totals.days,
+            "duration": duration_label(totals.weeks, totals.days),
             "currency": config.currency,
         },
         "versions": [],
@@ -136,6 +151,15 @@ def _features(drafts: list[Json], hours: list[Json], engine: PricingEngine) -> l
             }
         )
     return out
+
+
+def founder_budget(hints: Mapping[str, Any]) -> Json | None:
+    """The budget the founder picked on the slider ("Up to $1,500", "$50,000+"), as a number."""
+    label = str(hints.get("budget") or "").strip()
+    digits = re.sub(r"[^0-9]", "", label.split(".")[0])
+    if not digits:
+        return None
+    return {"label": label, "amount": int(digits), "openEnded": label.endswith("+")}
 
 
 def _fit_budget(features: list[Json], budget: int) -> bool:

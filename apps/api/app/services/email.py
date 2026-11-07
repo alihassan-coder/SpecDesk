@@ -18,15 +18,15 @@ TIMEOUT_SECONDS = 10.0
 
 
 def plan_ready_payload(
-    settings: Settings, to: str, title: str, plan_url: str, price_range: str, weeks: int
+    settings: Settings, to: str, title: str, plan_url: str, price_range: str, duration: str
 ) -> dict[str, object]:
+    """`duration` is ready to show, e.g. "4 days" or "6 weeks"."""
     book_url = f"{settings.web_url.rstrip('/')}/book"
-    week_word = "week" if weeks == 1 else "weeks"
     subject = f"Your plan is ready: {title}"
     text = (
         f"Your plan for {title} is ready.\n\n"
         f"Estimated price: {price_range}\n"
-        f"Estimated time: {weeks} {week_word}\n\n"
+        f"Estimated time: {duration}\n\n"
         f"Open your plan: {plan_url}\n\n"
         f"Want us to build it? Book a free call: {book_url}\n"
     )
@@ -34,7 +34,7 @@ def plan_ready_payload(
     html = f"""<div style="font-family:system-ui,sans-serif;max-width:480px;line-height:1.5">
 <h2 style="margin:0 0 12px">Your plan for {t} is ready</h2>
 <p style="margin:0">Estimated price: <strong>{escape(price_range)}</strong></p>
-<p style="margin:0 0 20px">Estimated time: <strong>{weeks} {week_word}</strong></p>
+<p style="margin:0 0 20px">Estimated time: <strong>{escape(duration)}</strong></p>
 <p><a href="{u}" style="display:inline-block;padding:10px 18px;border-radius:8px;
 background:#2563eb;color:#fff;text-decoration:none">Open your plan</a></p>
 <p style="margin-top:24px">Want us to build it? <a href="{b}">Book a free call</a></p>
@@ -53,7 +53,7 @@ def send_plan_ready(
     title: str,
     plan_url: str,
     price_range: str,
-    weeks: int,
+    duration: str,
     *,
     settings: Settings | None = None,
 ) -> None:
@@ -68,7 +68,7 @@ def send_plan_ready(
     try:
         res = httpx.post(
             BREVO_URL,
-            json=plan_ready_payload(s, to, title, plan_url, price_range, weeks),
+            json=plan_ready_payload(s, to, title, plan_url, price_range, duration),
             headers={"api-key": s.brevo_api_key.get_secret_value(), "accept": "application/json"},
             timeout=TIMEOUT_SECONDS,
         )

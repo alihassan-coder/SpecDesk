@@ -4,11 +4,14 @@ separately, and a risk buffer and project setup time are added by the system —
 
 - Give `hours` for **every** feature id: focused build time for one experienced full-stack developer
   using modern frameworks, managed services, component libraries and AI coding tools, including basic
-  tests. Typical ranges: S 4-10 hours, M 12-24, L 25-45, XL 50-90.
+  tests. Typical ranges: S 2-8 hours, M 10-24, L 25-45, XL 50-90.
+- **Tiny (Basic) projects** are priced like small freelance gigs: features are 1-4 hours each, and the
+  whole job is usually 5-15 hours (a one-page site with a menu, map and contact form ≈ 6-10 hours).
 - Connecting a well-documented API (Stripe, Shopify, an LLM, email) is usually S or M, not L.
 - Keep the total feature hours for the **must** features inside the project's budget (given below).
   If your numbers go over it, the scope is too big or the hours are padded — trim the hours.
-- Reference points: a simple embeddable AI chatbot that answers from a store's products and orders is
+- Reference points: a landing page with a contact form is about 6-14 hours; a small Telegram or
+  WhatsApp bot about 8-20; a simple embeddable AI chatbot that answers from a store's products and orders is
   about 60-120 hours; a booking app with payments about 150-280; a two-sided marketplace MVP about
   300-500.
 - `phases`: 2-4 delivery phases in build order. Each phase lists what the founder can see at the end.

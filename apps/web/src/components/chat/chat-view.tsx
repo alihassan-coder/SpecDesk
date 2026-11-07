@@ -16,7 +16,7 @@ import { DEMO_PLAN, PIPELINE_SCRIPT, ROUND_1, ROUND_2 } from "@/mocks/data";
 import type { PlanFile, StreamEvent } from "@/mocks/types";
 import { humanize, type HumanError } from "@/lib/errors";
 import { formatRange } from "@/lib/format";
-import { estimate } from "@/lib/pricing";
+import { estimate, formatDuration } from "@/lib/pricing";
 import { looksLikeSoftware } from "@/lib/scope-guard";
 import { cn } from "@/lib/utils";
 import { AgentTimeline } from "./agent-timeline";
@@ -45,7 +45,7 @@ const COPY = {
   ready: `**Your plan is ready.**
 
 - **Price:** ${formatRange(est.priceMin, est.priceMax)}
-- **Timeline:** ${est.weeks} weeks
+- **Timeline:** ${formatDuration(est)}
 - **MVP:** ${mvpCount} features, ${laterCount} saved for later
 
 Biggest risk is **health data rules**. You can change the scope in the plan.`,

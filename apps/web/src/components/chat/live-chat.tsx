@@ -23,6 +23,7 @@ import {
 } from "@/lib/api";
 import { humanize, type HumanError } from "@/lib/errors";
 import { formatRange } from "@/lib/format";
+import { formatDuration } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import { LIVE_AGENT_IDS } from "@/mocks/data";
 import type { PlanFile, QuestionRound as Round, StreamEvent } from "@/mocks/types";
@@ -568,7 +569,7 @@ function PlanReady({
   const text = `**Your plan is ready.**
 
 - **Price:** ${formatRange(plan.estimate.priceMin, plan.estimate.priceMax)}
-- **Timeline:** ${plan.estimate.weeks} weeks
+- **Timeline:** ${plan.estimate.duration ?? formatDuration(plan.estimate)}${plan.sizeLabel ? ` · ${plan.sizeLabel} project` : ""}
 - **First version:** ${mvp} features, ${later} saved for later${risk ? `\n\nBiggest risk: **${risk}**.` : ""}`;
   return (
     <div className="space-y-1">

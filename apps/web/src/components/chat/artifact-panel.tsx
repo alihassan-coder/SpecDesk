@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { DEMO_PLAN } from "@/mocks/data";
 import type { PlanFile } from "@/mocks/types";
 import { formatRange } from "@/lib/format";
-import { estimate } from "@/lib/pricing";
+import { estimate, formatDuration } from "@/lib/pricing";
 import { fileIcon } from "./file-cards";
 
 /** Side panel that previews a generated file — like ChatGPT/Claude artifacts. */
@@ -114,7 +114,7 @@ function PdfPreview() {
       <div className="mt-6 grid grid-cols-3 gap-2 text-center">
         {[
           ["Price", formatRange(est.priceMin, est.priceMax)],
-          ["Timeline", `${est.weeks} weeks`],
+          ["Timeline", formatDuration(est)],
           ["Readiness", `${plan.readiness}/100`],
         ].map(([k, v]) => (
           <div key={k} className="rounded border border-[#0c1220]/10 p-2">

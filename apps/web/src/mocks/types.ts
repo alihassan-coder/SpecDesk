@@ -126,6 +126,11 @@ export interface Plan {
   team: string[];
   hourlyRate: number;
   buffer: number; // e.g. 0.2 = 20%
+  /** Project size the analyst picked: tiny (Basic) · small · medium (Intermediate) · large (Big). */
+  size?: "tiny" | "small" | "medium" | "large";
+  sizeLabel?: string;
+  /** The founder's budget from the slider, if they set one. */
+  budget?: { label: string; amount: number; openEnded: boolean } | null;
   risks: Risk[];
   assumptions: string[];
   competitors: Competitor[];

@@ -51,7 +51,7 @@ export interface LivePlan extends Plan {
   research: Research | null;
   chatId: string;
   version: string;
-  estimate: { hours: number; priceMin: number; priceMax: number; weeks: number; currency: string };
+  estimate: { hours: number; priceMin: number; priceMax: number; weeks: number; days?: number; duration?: string; currency: string };
 }
 
 async function toApiError(res: Response): Promise<ApiError> {

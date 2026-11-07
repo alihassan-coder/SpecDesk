@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Check, CircleDollarSign, Lightbulb, Mic, MonitorSmartphone, Paperclip, SlidersHorizontal, Square, X } from "lucide-react";
+import { Check, Lightbulb, Mic, MonitorSmartphone, Paperclip, SlidersHorizontal, Square, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { BeamBloom, SendButton, promptSurface } from "@/components/prompt/prompt-parts";
+import { BudgetPicker, budgetLabel } from "./budget-picker";
 
 const EXAMPLES = [
   "A marketplace where photographers rent camera gear to each other",
@@ -31,12 +32,6 @@ const PLATFORMS = [
   { value: "both", label: "Web + mobile" },
 ];
 
-const BUDGETS = [
-  { value: "lt10", label: "Under $10k" },
-  { value: "10-25", label: "$10k – $25k" },
-  { value: "25-50", label: "$25k – $50k" },
-  { value: "gt50", label: "$50k+" },
-];
 
 const DEPTHS = [
   { value: "quick", label: "Quick", hint: "Fewer questions" },
@@ -92,7 +87,7 @@ export function IdeaBox({ next = "login" }: { next?: "login" | "chat" }) {
   const [idea, setIdea] = useState("");
   const [depth, setDepth] = useState("balanced");
   const [platform, setPlatform] = useState("");
-  const [budget, setBudget] = useState("");
+  const [budget, setBudget] = useState<number | null>(null); // slider step, null = not set
   const [file, setFile] = useState<File | null>(null);
   const [listening, setListening] = useState(false);
   const recRef = useRef<Recognition | null>(null);
@@ -107,7 +102,7 @@ export function IdeaBox({ next = "login" }: { next?: "login" | "chat" }) {
     if (!text) return;
     const q = new URLSearchParams({ idea: text, depth });
     if (platform) q.set("platform", platform);
-    if (budget) q.set("budget", budget);
+    if (budget !== null) q.set("budget", budgetLabel(budget));
     router.push(next === "chat" ? `/chat/new?${q}` : `/login?${q}`);
   };
 
@@ -136,7 +131,6 @@ export function IdeaBox({ next = "login" }: { next?: "login" | "chat" }) {
   };
 
   const platformLabel = PLATFORMS.find((p) => p.value === platform)?.label;
-  const budgetLabel = BUDGETS.find((b) => b.value === budget)?.label;
 
   return (
     <div data-beam="outer" className="mx-auto w-full max-w-2xl shadow-sm">
@@ -227,22 +221,7 @@ export function IdeaBox({ next = "login" }: { next?: "login" | "chat" }) {
           </DropdownMenu>
 
           {/* budget */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Pill icon={CircleDollarSign} active={!!budget}>
-                {budgetLabel ?? "Budget"}
-              </Pill>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-44">
-              <DropdownMenuRadioGroup value={budget} onValueChange={setBudget}>
-                {BUDGETS.map((b) => (
-                  <DropdownMenuRadioItem key={b.value} value={b.value}>
-                    {b.label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <BudgetPicker value={budget} onChange={setBudget} />
 
           {/* examples */}
           <DropdownMenu>

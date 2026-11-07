@@ -7,8 +7,9 @@ spread: 0.15             # ± range around the midpoint
 price_round_to: 100      # prices are rounded to this step
 base_hours: 24           # setup, deploy, QA — modern templates and managed services
 hours_per_week: 30       # per engineer
+hours_per_day: 6         # focused hours per engineer-day (for jobs measured in days)
 team_size: 1.5
-min_weeks: 2
+min_weeks: 1
 # Calibrated to freelance-market quotes (e.g. Upwork) for an experienced developer using modern
 # frameworks, managed services and AI coding tools — see DECISIONS.md.
 complexity_hours:        # default hours per feature when the model gives only a size
@@ -16,6 +17,15 @@ complexity_hours:        # default hours per feature when the model gives only a
   M: 20
   L: 40
   XL: 80
+# Per project size (the analyst picks one; the founder's budget guides it). Base hours, buffer and
+# team grow with the project; `must_hours` is the budget for the must features (planner guidance,
+# and the point past which code trims an estimate). The top-level base_hours / buffer / team_size
+# above are the "medium" defaults used when no size is known.
+sizes:
+  tiny:   { label: Basic,        base_hours: 2,  buffer: 0.10, team_size: 1,   must_hours: [4, 30] }
+  small:  { label: Small,        base_hours: 12, buffer: 0.15, team_size: 1,   must_hours: [30, 150] }
+  medium: { label: Intermediate, base_hours: 24, buffer: 0.15, team_size: 1.5, must_hours: [150, 400] }
+  large:  { label: Big,          base_hours: 40, buffer: 0.20, team_size: 2,   must_hours: [400, 900] }
 platform_multiplier:     # not applied yet (frontend engine doesn't either) — see DECISIONS.md
   web: 1.0
   mobile: 1.25
