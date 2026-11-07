@@ -44,11 +44,11 @@ export function NavUser() {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton asChild size="lg" variant="outline" tooltip="Sign in">
+          <SidebarMenuButton asChild size="lg" variant="outline" tooltip="Log in">
             <Link href="/login">
               <LogIn />
               <span className="grid leading-tight">
-                <span className="font-medium">Sign in</span>
+                <span className="font-medium">Log in</span>
                 <span className="text-xs text-muted-foreground">Save your plans</span>
               </span>
             </Link>
@@ -133,7 +133,7 @@ export function NavUser() {
                   });
               }}
             >
-              <LogOut /> Sign out
+              <LogOut /> Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

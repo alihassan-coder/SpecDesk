@@ -16,11 +16,12 @@ from langgraph.runtime import Runtime
 from langgraph.types import Command, interrupt
 from pydantic import ValidationError
 
-from app.agents.interviewer.schemas import Answer, InterviewerTurn, Question, QuestionRound
+from app.agents.interviewer.schemas import Answer, InterviewerTurn, Question, QuestionRound, Triage
 from app.agents.llm.ask import AskModel
 from app.agents.prompts import load_prompt
 
 AGENT = "interviewer"
+TRIAGE = "triage"
 
 
 class AnsweredRound(TypedDict):
@@ -28,13 +29,22 @@ class AnsweredRound(TypedDict):
     answers: dict[str, dict[str, Any]]  # question id -> Answer, camelCase JSON
 
 
+class ChatTurn(TypedDict):
+    role: Literal["user", "assistant"]
+    text: str
+
+
 class InterviewState(TypedDict, total=False):
     idea: Required[str]
     hints: dict[str, str]  # optional founder hints from the prompt box: platform, budget …
+    # Messages before the interview starts ("hi" → "tell me about your app" → …).
+    conversation: Annotated[list[ChatTurn], operator.add]
+    title: str  # set by triage once the messages describe a real app idea
     rounds: Annotated[list[AnsweredRound], operator.add]  # reducer: each round is appended
     pending: dict[str, Any] | None  # the round currently waiting for answers
+    finish: bool  # the founder pressed "Generate plan now"
     brief: str
-    status: Literal["interviewing", "ready"]
+    status: Literal["needs_idea", "interviewing", "ready"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,6 +56,51 @@ class InterviewContext:
     max_questions: int = 5
 
 
+# ---------- triage (front desk) ----------
+
+
+def founder_words(state: InterviewState) -> str:
+    """Everything the founder has typed before the interview, in order."""
+    extra = [t["text"] for t in state.get("conversation", []) if t["role"] == "user"]
+    return "\n\n".join([state["idea"].strip(), *[e.strip() for e in extra]])
+
+
+def triage(
+    state: InterviewState, runtime: Runtime[InterviewContext]
+) -> Command[Literal["interviewer", "__end__"]]:
+    """Only real app ideas start the (paid, slower) interview. "hi" gets a friendly reply."""
+    if state.get("status") in ("interviewing", "ready") or state.get("rounds"):
+        return Command(goto="interviewer")
+    emit = get_stream_writer()
+    emit({"type": "agent.status", "agent": TRIAGE, "status": "working"})
+    words = founder_words(state)
+    turns = state.get("conversation", [])
+    history = "\n".join(f"{t['role']}: {t['text']}" for t in turns)
+    user = f"<founder_messages>\n{words}\n</founder_messages>"
+    if history:
+        user += f"\n\n<conversation>\n{history}\n</conversation>"
+    result = runtime.context.ask(TRIAGE, Triage, system=load_prompt(TRIAGE), user=user)
+    emit({"type": "agent.status", "agent": TRIAGE, "status": "done"})
+
+    if result.kind == "app_idea":
+        return Command(
+            update={"idea": words, "title": result.title.strip(), "status": "interviewing"},
+            goto="interviewer",
+        )
+    reply = result.reply.strip() or (
+        "Tell me about the app you'd like to build: what it should do and who will use it. "
+        "For example: “A booking app for dog walkers, where owners pay in the app.”"
+    )
+    emit({"type": "assistant.message", "text": reply})
+    return Command(
+        update={
+            "conversation": [ChatTurn(role="assistant", text=reply)],
+            "status": "needs_idea",
+        },
+        goto="__end__",
+    )
+
+
 # ---------- interviewer ----------
 
 
@@ -54,7 +109,7 @@ def interviewer(
 ) -> Command[Literal["ask_founder", "__end__"]]:
     ctx = runtime.context
     rounds = state.get("rounds", [])
-    must_finish = len(rounds) >= ctx.max_rounds
+    must_finish = len(rounds) >= ctx.max_rounds or bool(state.get("finish"))
     emit = get_stream_writer()
     emit({"type": "agent.status", "agent": AGENT, "status": "working"})
 
@@ -158,22 +213,24 @@ def ask_founder(state: InterviewState) -> dict[str, Any]:
     ):  # nothing to ask (defensive; the interviewer always sets it before routing here)
         return {}
     resumed: object = interrupt(pending)  # pauses here until Command(resume=resume_payload(...))
-    raw: object = (
-        cast(dict[str, object], resumed).get("answers") if isinstance(resumed, dict) else resumed
-    )
-    return {
+    payload = cast(dict[str, object], resumed) if isinstance(resumed, dict) else {}
+    raw: object = payload.get("answers") if isinstance(resumed, dict) else resumed
+    update: dict[str, Any] = {
         "rounds": [AnsweredRound(round=pending, answers=clean_answers(pending, raw))],
         "pending": None,
     }
+    if payload.get("finish"):
+        update["finish"] = True
+    return update
 
 
-def resume_payload(answers: dict[str, Any]) -> dict[str, Any]:
+def resume_payload(answers: dict[str, Any], *, finish: bool = False) -> dict[str, Any]:
     """Wrap answers for `Command(resume=...)`.
 
     LangGraph reads a bare dict as a map of interrupt ids → values, so an empty answers dict
     (the founder skipped everything) would resume nothing. The `answers` key keeps it a value.
     """
-    return {"answers": answers}
+    return {"answers": answers, "finish": True} if finish else {"answers": answers}
 
 
 def clean_answers(pending: dict[str, Any], raw: object) -> dict[str, dict[str, Any]]:

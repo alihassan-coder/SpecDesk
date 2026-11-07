@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     auth_jwks_url: str = "http://localhost:3000/api/auth/jwks"
     auth_issuer: str = "http://localhost:3000"
     auth_audience: str = "http://localhost:3000"
+    # Transactional email (Brevo). No key = emails are skipped (logged at info level).
+    brevo_api_key: SecretStr | None = None
+    email_from_address: str | None = None
+    email_from_name: str = "SpecDesk"
+    web_url: str = "http://localhost:3000"  # public site, for links in emails
 
     @field_validator("database_url", "database_url_unpooled", mode="before")
     @classmethod

@@ -90,3 +90,44 @@ def test_missing_keys_tell_the_admin_what_to_do() -> None:
     assert err.value.error.code == "model_not_configured"
     assert "groq" in err.value.error.message
     assert records == []  # no call was attempted
+
+
+class RateLimitError(Exception):
+    """Same class name the provider SDKs use for HTTP 429."""
+
+
+def test_rate_limits_wait_and_retry_the_chain_instead_of_failing() -> None:
+    calls = {"n": 0}
+
+    def flaky(entry: ModelEntry, key: SecretStr, effort: Effort, schema: type[BaseModel]):
+        def run(_: list[BaseMessage]) -> tuple[object, object]:
+            calls["n"] += 1
+            if calls["n"] <= 2:  # both models limited on the first pass
+                raise RateLimitError("429")
+            return AIMessage(content=""), Answer(text="after waiting")
+
+        return RunnableLambda(run)
+
+    waits: list[float] = []
+    gw = ModelGateway(
+        DEFAULT_CATALOG,
+        keys=lambda _p: SecretStr("gsk-test"),
+        runner=flaky,
+        sleep=waits.append,
+        rate_limit_waits=(1.0, 2.0),
+    )
+    assert gw("interviewer", Answer, system="s", user="u") == Answer(text="after waiting")
+    assert waits == [1.0]
+
+
+def test_real_errors_do_not_wait() -> None:
+    waits: list[float] = []
+    gw = ModelGateway(
+        DEFAULT_CATALOG,
+        keys=lambda _p: SecretStr("gsk-test"),
+        runner=runner_that({PRIMARY: TimeoutError("x"), FALLBACK: TimeoutError("x")}),
+        sleep=waits.append,
+    )
+    with pytest.raises(AppError):
+        gw("interviewer", Answer, system="s", user="u")
+    assert waits == []

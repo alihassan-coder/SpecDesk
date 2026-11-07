@@ -8,8 +8,8 @@ cd apps/api
 uv sync                       # creates .venv from uv.lock (add --offline if everything is cached)
 ```
 Secrets live in `apps/api/.env` (gitignored). Variables: see the repo-root `.env.example`
-(`DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `ADMIN_EMAILS`, `CORS_ORIGINS`, `ENVIRONMENT`,
-`SECRETS_ENCRYPTION_KEY`). Plain `postgresql://` Neon URLs are converted to `postgresql+psycopg://`.
+(database URLs, auth/JWT settings, `GROQ_API_KEY`, Brevo, `SECRETS_ENCRYPTION_KEY`; the
+root README has the full table). Plain `postgresql://` Neon URLs are converted to `postgresql+psycopg://`.
 
 ## Run
 ```bash
@@ -36,7 +36,7 @@ uv run alembic downgrade -1                          # local / Neon branch only
 uv run python -m app.agents.runtime.checkpointer setup
 
 # put a provider key in apps/api/.env (or save it in Admin → API keys)
-#   ANTHROPIC_API_KEY=sk-ant-...
+#   GROQ_API_KEY=...   (Groq is the default provider)
 
 # optional: one real round against the model (costs a few cents)
 SPECDESK_LIVE_TESTS=1 uv run pytest tests/agents/test_live_interviewer.py -s
@@ -44,7 +44,8 @@ SPECDESK_LIVE_TESTS=1 uv run pytest tests/agents/test_live_interviewer.py -s
 
 Endpoints: `POST /api/v1/chats` → `POST /api/v1/chats/{id}/interview` (SSE) →
 `POST /api/v1/chats/{id}/answers` (SSE) · `GET /api/v1/chats/{id}`.
-Until M3 there is no sign-in: development and test use a fixed dev owner; other environments refuse.
+Requests carry a Better Auth JWT (added by the Next.js `/api/v1` proxy); each chat and plan is owned by one user.
+Without a bearer header, development and test fall back to a fixed dev owner; other environments refuse.
 
 ## Quality gates
 ```bash
@@ -57,7 +58,7 @@ uv run pytest                  # DB tests skip automatically when no database is
 ## Layout
 - `app/core` — `config.py` (typed settings), `errors.py` (humanized error shape + handlers)
 - `app/db` — `base.py` (naming convention, mixins), `models.py` (app tables), `session.py` (engine/session deps)
-- `app/routers` — HTTP routes under `/api/v1` (`health`, `pricing`)
-- `app/services` — `pricing.py` (rule-based engine over `pricing.yaml`)
+- `app/routers` — HTTP routes under `/api/v1` (`health`, `pricing`, `chats`, `plans`, `admin`)
+- `app/services` — `pricing.py` (rule-based engine over `pricing.yaml`), plan files, email, admin
 - `migrations/` — Alembic env + versions
 - `tests/` — pytest

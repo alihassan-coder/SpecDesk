@@ -117,7 +117,7 @@ def test_bad_tokens_are_a_humanized_401(keys: LocalKeys, overrides: dict[str, An
     error = res.json()["error"]
     assert error["code"] == "session_expired"
     assert error["title"] == "Your session expired"
-    assert error["action"] == "Sign in again."
+    assert error["action"] == "Log in again."
 
 
 def test_token_signed_by_another_key_is_rejected(keys: LocalKeys) -> None:
@@ -137,7 +137,7 @@ def test_missing_header_in_production_needs_sign_in(keys: LocalKeys) -> None:
     res = TestClient(_app(keys, "production")).get("/_test/me")
     assert res.status_code == 401
     assert res.json()["error"]["code"] == "sign_in_required"
-    assert res.json()["error"]["title"] == "Please sign in"
+    assert res.json()["error"]["title"] == "Please log in"
 
 
 @pytest.mark.parametrize("environment", ["development", "test"])

@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
-from app.agents.interviewer.schemas import InterviewerTurn, Option, Question
+from app.agents.interviewer.schemas import InterviewerTurn, Option, Question, Triage
 from app.agents.runtime.checkpointer import get_checkpointer
 from app.agents.service import get_ask_for_chat
 from app.core.errors import AppError
@@ -34,6 +34,8 @@ class FakeModel:
         self.fail_with: AppError | None = None  # set to simulate a provider problem
 
     def __call__(self, agent: str, schema: type[T], *, system: str, user: str) -> T:
+        if agent == "triage":  # the front desk accepts every test idea
+            return cast(T, Triage(kind="app_idea", title="Test plan"))
         self.calls += 1
         if self.fail_with is not None:
             raise self.fail_with
@@ -106,7 +108,8 @@ def test_full_interview_over_sse(api: tuple[TestClient, FakeModel, list[uuid.UUI
     assert start.headers["content-type"].startswith("text/event-stream")
     events = _events(start.text)
     names = [e for e, _ in events]
-    assert names == ["agent.status", "agent.note", "question.round"]
+    # triage working/done, then the interviewer: working, its note, the round
+    assert names == ["agent.status", "agent.status", "agent.status", "agent.note", "question.round"]
     round_one = events[-1][1]["round"]
     assert round_one["questions"][0]["id"] == "r1_platform"
     assert round_one["questions"][0]["recommended"] == "mobile"
@@ -150,9 +153,9 @@ def test_unknown_chat_and_bad_input_are_humanized(
     assert missing.status_code == 404
     assert missing.json()["error"]["code"] == "not_found"
 
-    short = client.post("/api/v1/chats", json={"idea": "app"})
-    assert short.status_code == 422
-    assert "error" in short.json()
+    empty = client.post("/api/v1/chats", json={"idea": ""})  # "hi" is fine; nothing isn't
+    assert empty.status_code == 422
+    assert "error" in empty.json()
 
 
 def test_a_failed_step_is_retried_on_the_next_call(

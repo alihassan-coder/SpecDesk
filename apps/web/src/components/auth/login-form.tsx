@@ -172,7 +172,7 @@ export function LoginForm() {
   return (
     <Card className="glass w-full max-w-sm">
       <CardHeader>
-        <CardTitle className="text-xl">Sign in to SpecDesk</CardTitle>
+        <CardTitle className="text-xl">Log in to SpecDesk</CardTitle>
         <CardDescription>
           {idea ? "Your idea is saved." : "We'll email you a 6-digit code."}
         </CardDescription>

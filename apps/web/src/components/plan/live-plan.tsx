@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api, type LivePlan } from "@/lib/api";
 import { humanize, type HumanError } from "@/lib/errors";
+import { createShareLink } from "@/lib/share-api";
 import { PlanWorkspace } from "./plan-workspace";
 
 /** Loads a real plan from the API and shows it in the plan workspace. */
@@ -58,9 +59,11 @@ export function LivePlanView({ planId }: { planId: string }) {
   return (
     <PlanWorkspace
       key={plan.version}
-      plan={plan}
+      // Web research (when the founder ran it) beats the critic's from-memory competitor list.
+      plan={plan.research?.competitors.length ? { ...plan, competitors: plan.research.competitors } : plan}
       downloadAllHref={zip ? api.fileUrl(plan.id, zip.name) : undefined}
       onSaveVersion={(included, change) => api.saveVersion(plan.id, included, change)}
+      onShare={() => createShareLink(plan.id)}
     />
   );
 }

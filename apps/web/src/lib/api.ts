@@ -27,14 +27,28 @@ export interface AnsweredRound {
   answers: Record<string, { optionId?: string; text?: string; skipped?: boolean }>;
 }
 
+export interface ChatTurn {
+  role: "user" | "assistant";
+  text: string;
+}
+
 export interface ChatDetail extends LiveChatSummary {
   idea: string;
+  /** needs_idea: still chatting (e.g. they said "hi"); interviewing; ready (brief written). */
+  stage: "needs_idea" | "interviewing" | "ready";
+  conversation: ChatTurn[];
   rounds: AnsweredRound[];
   pending: QuestionRound | null;
   brief: string | null;
 }
 
+export interface Research {
+  summary: string;
+  competitors: { name: string; url: string; note: string }[];
+}
+
 export interface LivePlan extends Plan {
+  research: Research | null;
   chatId: string;
   version: string;
   estimate: { hours: number; priceMin: number; priceMax: number; weeks: number; currency: string };
@@ -75,6 +89,8 @@ export const api = {
   getPlan: (id: string) => request<LivePlan>(`/plans/${id}`),
   saveVersion: (id: string, included: Record<string, boolean>, change: string) =>
     request<PlanVersion>(`/plans/${id}/versions`, { method: "POST", body: JSON.stringify({ included, change }) }),
+  sendFeedback: (chatId: string, target: string, rating: "up" | "down") =>
+    request<{ status: string }>(`/chats/${chatId}/feedback`, { method: "POST", body: JSON.stringify({ target, rating }) }),
   fileUrl: (planId: string, name: string) => `/api/v1/plans/${planId}/files/${encodeURIComponent(name)}`,
 };
 

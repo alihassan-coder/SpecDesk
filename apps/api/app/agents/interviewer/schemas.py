@@ -1,5 +1,7 @@
 """Shapes for the interview. JSON uses camelCase to match `apps/web/src/mocks/types.ts`."""
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
@@ -55,6 +57,17 @@ class InterviewerTurn(BaseModel):
         default="",
         description="When ready: the settled decisions as a short brief for the planners",
     )
+
+
+class Triage(BaseModel):
+    """What the front desk decides about the first message(s) of a chat."""
+
+    kind: Literal["app_idea", "greeting", "question", "not_software", "too_vague"]
+    reply: str = Field(
+        default="",
+        description="When not an app idea: a short, warm reply inviting them to describe it",
+    )
+    title: str = Field(default="", description="When an app idea: a 2-6 word title for the plan")
 
 
 class Answer(CamelModel):

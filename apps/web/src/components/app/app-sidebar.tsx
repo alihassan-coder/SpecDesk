@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CalendarCheck, FileText, LayoutDashboard, Plus, Settings, ShieldCheck, Sparkles } from "lucide-react";
 import { BookingDialog } from "@/components/booking/booking-dialog";
@@ -15,20 +15,29 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
+  SidebarInput,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { api, type LiveChatSummary } from "@/lib/api";
+import type { RenamedChat } from "@/lib/chat-api";
 import { CHATS } from "@/mocks/data";
+import { ChatActions } from "./chat-actions";
 import { NavUser } from "./nav-user";
+import { SIDEBAR_SEARCH_ID, useModKey } from "./shortcuts";
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const modKey = useModKey();
   const { role, isPending } = useDemoSession();
   const [bookingOpen, setBookingOpen] = useState(false);
   const [liveChats, setLiveChats] = useState<LiveChatSummary[] | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [query, setQuery] = useState("");
   const signedIn = !isPending && role !== "guest";
 
   // Signed-in founders see their real chats; refreshed on navigation so a new chat shows up.
@@ -42,10 +51,25 @@ export function AppSidebar() {
     return () => {
       cancelled = true;
     };
-  }, [signedIn, pathname]);
+  }, [signedIn, pathname, refreshKey]);
 
   const chats: { id: string; title: string }[] = signedIn ? (liveChats ?? []) : CHATS.filter((c) => c.id === "demo");
   const latestPlan = liveChats?.find((c) => c.planId)?.planId;
+  const searchable = signedIn && (liveChats?.length ?? 0) > 0;
+  const needle = query.trim().toLowerCase();
+  const shown = searchable && needle ? chats.filter((c) => c.title.toLowerCase().includes(needle)) : chats;
+
+  function handleRenamed(row: RenamedChat) {
+    setLiveChats((prev) => prev?.map((c) => (c.id === row.id ? { ...c, title: row.title } : c)) ?? prev);
+  }
+
+  function handleDeleted(id: string) {
+    const planId = liveChats?.find((c) => c.id === id)?.planId;
+    setLiveChats((prev) => prev?.filter((c) => c.id !== id) ?? prev);
+    const onIt = pathname === `/chat/${id}` || (planId != null && pathname === `/plan/${planId}`);
+    if (onIt) router.push("/chat");
+    else setRefreshKey((k) => k + 1); // navigating refetches on its own
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -75,6 +99,13 @@ export function AppSidebar() {
                   <Link href={role === "guest" ? "/login" : "/chat"}>
                     <Plus />
                     <span>New plan</span>
+                    <KbdGroup
+                      aria-hidden
+                      className="ml-auto hidden md:inline-flex group-data-[collapsible=icon]:hidden"
+                    >
+                      <Kbd>{modKey}</Kbd>
+                      <Kbd>K</Kbd>
+                    </KbdGroup>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -109,13 +140,33 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          {searchable && (
+            <div className="pb-2">
+              <label htmlFor={SIDEBAR_SEARCH_ID} className="sr-only">
+                Search plans
+              </label>
+              <SidebarInput
+                id={SIDEBAR_SEARCH_ID}
+                type="search"
+                placeholder="Search plans"
+                autoComplete="off"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+          )}
           <SidebarGroupLabel>Recent plans</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {signedIn && liveChats?.length === 0 && (
                 <p className="px-2 py-1 text-xs text-muted-foreground">No plans yet. Start one with New plan.</p>
               )}
-              {chats.map((c) => (
+              {searchable && shown.length === 0 && (
+                <p role="status" className="px-2 py-1 text-xs text-muted-foreground">
+                  No plans match
+                </p>
+              )}
+              {shown.map((c) => (
                 <SidebarMenuItem key={c.id}>
                   <SidebarMenuButton asChild isActive={pathname === `/chat/${c.id}`}>
                     <Link href={`/chat/${c.id}`}>
@@ -123,6 +174,7 @@ export function AppSidebar() {
                       <span>{c.title}</span>
                     </Link>
                   </SidebarMenuButton>
+                  {signedIn && <ChatActions chat={c} onRenamed={handleRenamed} onDeleted={handleDeleted} />}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

@@ -20,7 +20,7 @@ export function NewPlan() {
             <Link href="/chat/demo" className="text-foreground underline underline-offset-4">
               See the demo
             </Link>{" "}
-            or sign in to save plans.
+            or log in to save plans.
           </p>
         )}
       </div>

@@ -21,7 +21,7 @@ is delegated. Read with [ARCHITECTURE.md](ARCHITECTURE.md) (SSE contract) and [D
 ## The graph
 
 ```
-START → load_memory → scope_guard ─(not software)→ END (humanized redirect)
+START → triage (front desk) ─(not an app idea yet)→ END (friendly reply, waits for the idea)
                           │
                           ▼
                      interviewer ⟲ (interrupt: wait for answers; loop until frontier empty)
@@ -96,7 +96,10 @@ Skill methods are re-written in our own words and our JSON format, stored as ver
   backlog, critic → assemble), priced by the pricing engine, saved as plan v1; files generated on
   request; scope changes saved as new versions. Wired to the website end to end (chat → questions →
   agents → plan → files). Live run on Groq: about 25 s interview + 85 s planning, ≈ $0.01 per plan.
-- ⏳ Not yet: scope guard (step 3), researcher with web search (step 5), Mem0 (step 6), architect chat (step 7).
+- ✅ **Step 3 + 5 done (2026-11-07):** front desk `triage` node (scope guard) before the
+  interviewer; on-request competitor research with Groq `browser_search`. Also: edit earlier answers
+  (fork), regenerate a round, "generate plan now", rate-limit backoff in the gateway.
+- ⏳ Not yet: Mem0 (step 6), architect chat (step 7), eval set (step 8).
 
 ## Build order (each step demoable)
 

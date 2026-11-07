@@ -65,9 +65,9 @@ KNOWN: dict[str, tuple[str, str, str]] = {
         "Refresh the page and try again.",
     ),
     "unauthorized": (
-        "Please sign in",
-        "Your session has ended or you aren't signed in yet.",
-        "Sign in with your email code, then try again.",
+        "Please log in",
+        "Your session has ended or you aren't logged in yet.",
+        "Log in with your email code, then try again.",
     ),
     "invalid_input": (
         "Some details need another look",
@@ -75,23 +75,23 @@ KNOWN: dict[str, tuple[str, str, str]] = {
         "Fix the highlighted fields and send again.",
     ),
     "sign_in_required": (
-        "Please sign in",
-        "You need to be signed in to do that.",
-        "Sign in with your email to continue.",
+        "Please log in",
+        "You need to be logged in to do that.",
+        "Log in with your email to continue.",
     ),
     "session_expired": (
         "Your session expired",
-        "For your security, sign-ins don't last forever.",
-        "Sign in again.",
+        "For your security, logins don't last forever.",
+        "Log in again.",
     ),
     "admin_only": (
         "Admins only",
         "This area is for the SpecDesk team. Your account isn't on the admin list.",
-        "Go back to your plans, or sign in with an admin email.",
+        "Go back to your plans, or log in with an admin email.",
     ),
     "auth_unavailable": (
-        "We can't check your sign-in right now",
-        "The sign-in service didn't answer. You're still signed in.",
+        "We can't check your login right now",
+        "The login service didn't answer. You're still logged in.",
         "Wait a moment and try again.",
     ),
     "database_unavailable": (

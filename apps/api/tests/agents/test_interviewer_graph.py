@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from app.agents.interviewer.graph import build_interview_graph
 from app.agents.interviewer.nodes import InterviewContext, resume_payload
-from app.agents.interviewer.schemas import InterviewerTurn, Option, Question
+from app.agents.interviewer.schemas import InterviewerTurn, Option, Question, Triage
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -31,6 +31,8 @@ class ScriptedModel:
         self.prompts: list[str] = []
 
     def __call__(self, agent: str, schema: type[T], *, system: str, user: str) -> T:
+        if agent == "triage":  # the front desk accepts every test idea
+            return cast(T, Triage(kind="app_idea", title="Test plan"))
         assert agent == "interviewer"
         assert "frontier" in system  # the real prompt file is loaded
         self.prompts.append(user)

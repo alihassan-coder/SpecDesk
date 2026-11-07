@@ -312,7 +312,7 @@ function NotificationSettings() {
     <Card>
       <CardHeader>
         <CardTitle>Email</CardTitle>
-        <CardDescription>To your sign-in email.</CardDescription>
+        <CardDescription>To your login email.</CardDescription>
       </CardHeader>
       <CardContent>
         <FieldGroup>
@@ -404,7 +404,7 @@ function AccountSettings() {
       <Card>
         <CardHeader>
           <CardTitle>You&apos;re exploring as a guest</CardTitle>
-          <CardDescription>Sign in to save plans.</CardDescription>
+          <CardDescription>Log in to save plans.</CardDescription>
         </CardHeader>
       </Card>
     );

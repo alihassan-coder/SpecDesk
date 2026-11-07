@@ -51,7 +51,7 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-1 lg:ml-0">
           <ThemeToggle />
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/login">Sign in</Link>
+            <Link href="/login">Log in</Link>
           </Button>
           <Button asChild size="sm" className="hidden sm:inline-flex">
             <Link href="/login">
@@ -77,7 +77,7 @@ export function SiteHeader() {
               <Separator className="my-2" />
               <div className="flex flex-col gap-2 px-4">
                 <Button asChild variant="outline">
-                  <Link href="/login">Sign in</Link>
+                  <Link href="/login">Log in</Link>
                 </Button>
                 <Button asChild>
                   <Link href="/login">

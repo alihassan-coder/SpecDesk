@@ -29,7 +29,7 @@ export function ArtifactPanel({
 
   const download = () => {
     if (!downloadHref) {
-      toast.success(`Downloading ${file.name}`, { description: "This is the demo — sign in to get real files." });
+      toast.success(`Downloading ${file.name}`, { description: "This is the demo — log in to get real files." });
       return;
     }
     const a = document.createElement("a");

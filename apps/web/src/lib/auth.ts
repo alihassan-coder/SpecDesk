@@ -18,7 +18,11 @@ export const auth = betterAuth({
   database: new Pool({ connectionString: process.env.DATABASE_URL }),
   // Signed session data in a short-lived cookie: most requests skip the database round trip.
   // Sign-out and expiry still work; a revoked session lives at most `maxAge` seconds longer.
-  session: { cookieCache: { enabled: true, maxAge: 5 * 60 } },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // stay logged in for 7 days…
+    updateAge: 60 * 60 * 24, // …counted from the last visit: the expiry moves forward once a day
+    cookieCache: { enabled: true, maxAge: 5 * 60 },
+  },
   plugins: [
     emailOTP({
       otpLength: 6,

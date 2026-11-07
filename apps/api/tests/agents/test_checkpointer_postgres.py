@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from app.agents.interviewer.graph import build_interview_graph
 from app.agents.interviewer.nodes import InterviewContext, resume_payload
-from app.agents.interviewer.schemas import InterviewerTurn, Option, Question
+from app.agents.interviewer.schemas import InterviewerTurn, Option, Question, Triage
 from app.agents.runtime.checkpointer import get_checkpointer
 from app.core.config import get_settings
 
@@ -25,6 +25,8 @@ class Script:
         self.turns = turns
 
     def __call__(self, agent: str, schema: type[T], *, system: str, user: str) -> T:
+        if agent == "triage":  # the front desk accepts every test idea
+            return cast(T, Triage(kind="app_idea", title="Test plan"))
         return cast(T, self.turns.pop(0))
 
 

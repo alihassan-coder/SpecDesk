@@ -4,7 +4,7 @@ import { RotateCcw, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { HumanError } from "@/lib/errors";
 
-export function ErrorCard({ error, onRetry }: { error: HumanError; onRetry?: () => void }) {
+export function ErrorCard({ error, onRetry, retryLabel = "Retry" }: { error: HumanError; onRetry?: () => void; retryLabel?: string }) {
   return (
     <div role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-4">
       <div className="flex gap-3">
@@ -15,7 +15,7 @@ export function ErrorCard({ error, onRetry }: { error: HumanError; onRetry?: () 
           <p className="mt-1 text-sm">{error.action}</p>
           {onRetry && (
             <Button size="sm" variant="outline" className="mt-3" onClick={onRetry}>
-              <RotateCcw className="size-4" /> Retry
+              <RotateCcw className="size-4" /> {retryLabel}
             </Button>
           )}
         </div>

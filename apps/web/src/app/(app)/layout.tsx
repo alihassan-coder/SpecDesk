@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { AppSidebar } from "@/components/app/app-sidebar";
 import { PageTitle } from "@/components/app/page-title";
+import { Shortcuts } from "@/components/app/shortcuts";
 import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Logo } from "@/components/brand/logo";
 import { Separator } from "@/components/ui/separator";
@@ -28,6 +29,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
     <SidebarProvider className="app-glass isolate">
       <Suspense fallback={<SidebarFallback />}>
         <AppSidebar />
+      </Suspense>
+      <Suspense>
+        <Shortcuts />
       </Suspense>
       <SidebarInset className="min-h-svh min-w-0 overflow-x-clip bg-transparent">
         <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/60 px-4 backdrop-blur-xl backdrop-saturate-150">

@@ -29,17 +29,20 @@ export function QuestionRound({
   round,
   onSubmit,
   answered,
+  initial,
 }: {
   round: Round;
   onSubmit: (answers: Answers) => void;
   answered?: Answers;
+  /** Start the stepper from these answers (editing an earlier round) instead of the picks. */
+  initial?: Answers;
 }) {
   if (answered) return <RoundSummary round={round} answers={answered} />;
-  return <Stepper round={round} onSubmit={onSubmit} />;
+  return <Stepper round={round} onSubmit={onSubmit} initial={initial} />;
 }
 
-function Stepper({ round, onSubmit }: { round: Round; onSubmit: (answers: Answers) => void }) {
-  const [answers, setAnswers] = useState<Answers>(() => recommendedAnswers(round));
+function Stepper({ round, onSubmit, initial }: { round: Round; onSubmit: (answers: Answers) => void; initial?: Answers }) {
+  const [answers, setAnswers] = useState<Answers>(() => ({ ...recommendedAnswers(round), ...initial }));
   const [index, setIndex] = useState(0);
   const [otherOpen, setOtherOpen] = useState(false);
 

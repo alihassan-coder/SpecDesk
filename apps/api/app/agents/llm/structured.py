@@ -59,6 +59,17 @@ def _ignore(_: CallRecord) -> None:
     return None
 
 
+class _RateLimited:
+    """Marker: the provider said "too many requests" (worth waiting for)."""
+
+
+_RATE_LIMITED = _RateLimited()
+
+
+def _is_rate_limit(exc: Exception) -> bool:
+    return "RateLimit" in type(exc).__name__ or getattr(exc, "status_code", None) == 429
+
+
 class ModelGateway:
     def __init__(
         self,
@@ -67,26 +78,41 @@ class ModelGateway:
         keys: KeyLookup,
         runner: RunnerFactory = langchain_runner,
         record: RecordCall = _ignore,
+        sleep: Callable[[float], None] = time.sleep,
+        rate_limit_waits: tuple[float, ...] = (8.0, 20.0),
     ) -> None:
         self._catalog = catalog
         self._keys = keys
         self._runner = runner
         self._record = record
+        self._sleep = sleep
+        # When every model in the chain is rate-limited (free tiers cap tokens per minute),
+        # wait and walk the chain again instead of failing the founder's run.
+        self._waits = rate_limit_waits
 
     def __call__(self, agent: str, schema: type[T], *, system: str, user: str) -> T:
         messages: list[BaseMessage] = [SystemMessage(content=system), HumanMessage(content=user)]
         missing_keys: list[str] = []
         tried = 0
 
-        for entry in self._catalog.chain_for(agent):
-            key = self._keys(entry.provider)
-            if key is None:
-                missing_keys.append(entry.provider)
-                continue
-            tried += 1
-            result = self._try(agent, entry, key, schema, messages)
-            if result is not None:
-                return result
+        for attempt, wait in enumerate((0.0, *self._waits)):
+            if attempt:
+                logger.info("All models rate-limited for %s; waiting %.0fs", agent, wait)
+                self._sleep(wait)
+            limited = 0
+            for entry in self._catalog.chain_for(agent):
+                key = self._keys(entry.provider)
+                if key is None:
+                    missing_keys.append(entry.provider)
+                    continue
+                tried += 1
+                result = self._try(agent, entry, key, schema, messages)
+                if isinstance(result, _RateLimited):
+                    limited += 1
+                elif result is not None:
+                    return result
+            if limited == 0 or tried == 0:
+                break  # a real failure (or no keys): waiting won't help
 
         if tried == 0:
             providers = ", ".join(sorted(set(missing_keys)))
@@ -106,7 +132,7 @@ class ModelGateway:
         key: SecretStr,
         schema: type[T],
         messages: list[BaseMessage],
-    ) -> T | None:
+    ) -> "T | _RateLimited | None":
         started = time.perf_counter()
         try:
             runnable = self._runner(entry, key, self._catalog.effort_for(agent), schema)
@@ -124,7 +150,7 @@ class ModelGateway:
                     exc.__class__.__name__,
                 )
             )
-            return None
+            return _RATE_LIMITED if _is_rate_limit(exc) else None
 
         usage = Usage.from_langchain(getattr(raw, "usage_metadata", None))
         ok = isinstance(parsed, schema)

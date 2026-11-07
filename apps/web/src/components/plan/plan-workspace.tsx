@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, CalendarCheck, Download, ExternalLink, Share2, Undo2 } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarCheck, ChevronDown, Download, ExternalLink, Share2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { BookingDialog } from "@/components/booking/booking-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Feature, Moscow, Plan, PlanVersion } from "@/mocks/types";
 import { formatMoney, formatRange } from "@/lib/format";
-import { estimate } from "@/lib/pricing";
+import { estimate, priceBreakdown, type PriceBreakdown } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import { Wireframe } from "./wireframe";
 
@@ -30,13 +32,16 @@ export function PlanWorkspace({
   readOnly = false,
   onSaveVersion,
   downloadAllHref,
+  onShare,
 }: {
   plan: Plan;
   readOnly?: boolean;
   /** Live plans: saves the scope on the server, which prices it and returns the new version. */
   onSaveVersion?: (included: Record<string, boolean>, change: string) => Promise<PlanVersion>;
-  /** Live plans: the ZIP with every file. */
+  /** Live or shared plans: the ZIP with every file (shown read-only too when given). */
   downloadAllHref?: string;
+  /** Live plans: turns sharing on and returns the full link. Absent = demo link. */
+  onShare?: () => Promise<string>;
 }) {
   const [features, setFeatures] = useState<Feature[]>(plan.features);
   const [baseline, setBaseline] = useState<Feature[]>(plan.features);
@@ -44,13 +49,37 @@ export function PlanWorkspace({
   const [bookingOpen, setBookingOpen] = useState(false);
 
   const saved = useMemo(() => estimate(baseline, plan), [baseline, plan]);
-  const live = estimate(features, plan);
+  const breakdown = useMemo(() => priceBreakdown(features, plan), [features, plan]);
+  const live = breakdown;
   const dirty = features.some((f, i) => f.included !== baseline[i].included);
   const latest = versions[versions.length - 1];
 
   const toggle = (id: string) => setFeatures((fs) => fs.map((f) => (f.id === id ? { ...f, included: !f.included } : f)));
 
   const [saving, setSaving] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
+  const share = async () => {
+    let url = `${location.origin}/share/demo-token`;
+    if (onShare) {
+      setSharing(true);
+      try {
+        url = await onShare();
+      } catch (e) {
+        const err = e as { error?: { title: string; action: string } };
+        toast.error(err.error?.title ?? "Couldn't create a share link", { description: err.error?.action ?? "Try again in a moment." });
+        return;
+      } finally {
+        setSharing(false);
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Share link copied — anyone with the link can view this plan, not edit it.");
+    } catch {
+      toast.success("Share link ready — anyone with the link can view this plan, not edit it.", { description: url });
+    }
+  };
 
   const saveVersion = async () => {
     const n = versions.length + 1;
@@ -98,17 +127,18 @@ export function PlanWorkspace({
           <h1 className="mt-1 text-4xl font-semibold">{plan.title}</h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">{plan.oneLiner}</p>
         </div>
+        {readOnly && downloadAllHref && (
+          <Button variant="outline" asChild className="self-start lg:self-auto">
+            <a href={downloadAllHref} download>
+              <Download className="size-4" /> Download all
+            </a>
+          </Button>
+        )}
         {!readOnly && (
           <div className="flex flex-wrap gap-2">
-            {!onSaveVersion && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  void navigator.clipboard?.writeText(`${location.origin}/share/demo-token`).catch(() => undefined);
-                  toast.success("Share link copied", { description: "Anyone with the link can view this plan. They can't edit it." });
-                }}
-              >
-                <Share2 className="size-4" /> Share
+            {(onShare || !onSaveVersion) && (
+              <Button variant="outline" onClick={() => void share()} disabled={sharing}>
+                <Share2 className="size-4" /> {sharing ? "Creating link…" : "Share"}
               </Button>
             )}
             {downloadAllHref ? (
@@ -118,7 +148,7 @@ export function PlanWorkspace({
                 </a>
               </Button>
             ) : (
-              <Button variant="outline" onClick={() => toast.success("Preparing rehabit-specdesk.zip", { description: "This is the demo — sign in to get real files." })}>
+              <Button variant="outline" onClick={() => toast.success("Preparing rehabit-specdesk.zip", { description: "This is the demo — log in to get real files." })}>
                 <Download className="size-4" /> Download all
               </Button>
             )}
@@ -154,6 +184,8 @@ export function PlanWorkspace({
           </div>
         )}
       </div>
+
+      <PriceBreakdownCard b={breakdown} />
 
       <Tabs defaultValue="scope" className="mt-6">
         <TabsList className="w-full justify-start overflow-x-auto [scrollbar-width:none] sm:w-fit">
@@ -359,6 +391,71 @@ export function PlanWorkspace({
 
       <BookingDialog open={bookingOpen} onOpenChange={setBookingOpen} planTitle={plan.title} />
     </div>
+  );
+}
+
+const TOP_FEATURES = 8;
+
+/** "Why this price": the same steps `estimate()` takes, updated live as features are toggled. */
+function PriceBreakdownCard({ b }: { b: PriceBreakdown }) {
+  const shown = b.features.slice(0, TOP_FEATURES);
+  const rest = b.features.slice(TOP_FEATURES);
+  const restHours = rest.reduce((n, f) => n + f.hours, 0);
+  const pct = (n: number) => `${Math.round(n * 100)}%`;
+  const perWeek = b.hoursPerWeek * b.teamSize;
+  const rawWeeks = Math.ceil(b.hours / perWeek);
+  return (
+    <Collapsible asChild>
+      <Card className="mt-6 gap-0 py-0">
+        <CollapsibleTrigger className="group flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:px-6">
+          <span className="flex-1 text-sm font-medium">Why this price</span>
+          <span className="text-sm text-muted-foreground tabular-nums">{b.hours} h × {formatMoney(b.hourlyRate)}/h</span>
+          <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="grid gap-6 border-t px-4 py-4 text-sm sm:px-6 md:grid-cols-2">
+            <section aria-label="Hours per feature">
+              <p className="text-xs text-muted-foreground">Hours per feature in this version</p>
+              <ul className="mt-2 space-y-1">
+                {shown.map((f) => (
+                  <BreakdownRow key={f.id} label={f.name} value={`${f.hours} h`} />
+                ))}
+                {rest.length > 0 && <BreakdownRow label={`and ${rest.length} more`} value={`${restHours} h`} muted />}
+                {b.features.length === 0 && <li className="text-muted-foreground">No features switched on.</li>}
+              </ul>
+            </section>
+            <section aria-label="How it adds up">
+              <p className="text-xs text-muted-foreground">How it adds up</p>
+              <ul className="mt-2 space-y-1">
+                <BreakdownRow label="Features" value={`${b.featureHours} h`} />
+                <BreakdownRow label="Setup, design system, QA" value={`+ ${b.baseHours} h`} />
+                <BreakdownRow label={`Risk buffer (${pct(b.buffer)})`} value={`× ${(1 + b.buffer).toFixed(2)}`} />
+                <BreakdownRow label="Total effort" value={`${b.hours} h`} strong />
+                <BreakdownRow label={`× ${formatMoney(b.hourlyRate)} per hour`} value={formatMoney(b.midpoint)} />
+                <BreakdownRow label={`± ${pct(b.spread)} range`} value={formatRange(b.priceMin, b.priceMax)} strong />
+                <BreakdownRow
+                  label={`÷ ${b.hoursPerWeek} h/week × ${b.teamSize} people`}
+                  value={`${b.weeks} weeks`}
+                  strong
+                />
+              </ul>
+              {rawWeeks < b.minWeeks && (
+                <p className="mt-2 text-xs text-muted-foreground">Every build gets at least {b.minWeeks} weeks.</p>
+              )}
+            </section>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+}
+
+function BreakdownRow({ label, value, strong, muted }: { label: string; value: string; strong?: boolean; muted?: boolean }) {
+  return (
+    <li className={cn("flex items-baseline justify-between gap-3", strong && "font-medium", muted && "text-muted-foreground")}>
+      <span className="min-w-0 truncate">{label}</span>
+      <span className="shrink-0 tabular-nums">{value}</span>
+    </li>
   );
 }
 

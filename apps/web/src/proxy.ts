@@ -16,8 +16,20 @@ function isDemoRoute(pathname: string): boolean {
   return (section === "chat" || section === "plan") && !!id && id !== "new" && !UUID.test(id);
 }
 
+/** Where a logged-in visitor of / or /login should land: their own `next` page, or the dashboard. */
+function dashboardFor(request: NextRequest): URL {
+  const next = request.nextUrl.searchParams.get("next");
+  const safe = next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/login");
+  return new URL(safe ? next : "/chat", request.url);
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  if (pathname === "/" || pathname === "/login") {
+    // Already logged in (valid session cookie): skip the landing and login pages.
+    const session = await auth.api.getSession({ headers: request.headers });
+    return session ? NextResponse.redirect(dashboardFor(request)) : NextResponse.next();
+  }
   if (isDemoRoute(pathname)) {
     // Signed-in people never see mock data: send them to their own plans.
     const session = await auth.api.getSession({ headers: request.headers });
@@ -34,5 +46,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/chat/:id", "/plan/:id", "/settings/:path*", "/admin/:path*"],
+  matcher: ["/", "/login", "/chat/:id", "/plan/:id", "/settings/:path*", "/admin/:path*"],
 };

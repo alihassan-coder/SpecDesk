@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.agents.planner.assemble import fit_phases
-from app.db.models import Chat, Plan, PlanVersion
+from app.db.models import Chat, Message, Plan, PlanVersion
 from app.services.plan_files import build_files, human_size, preview
 from app.services.pricing import FeatureInput, PricingEngine, load_pricing_config
 
@@ -131,4 +131,16 @@ def plan_payload(session: Session, plan: Plan, version: PlanVersion) -> Json:
         "version": version.label,
         "versions": [version_card(v) for v in versions],
         "files": file_cards(plan.id, data),
+        "research": latest_research(session, plan.chat_id),
     }
+
+
+def latest_research(session: Session, chat_id: uuid.UUID) -> Json | None:
+    """The newest web research for this plan's chat, if the founder asked for one."""
+    row = session.scalars(
+        select(Message)
+        .where(Message.chat_id == chat_id, Message.kind == "research")
+        .order_by(Message.created_at.desc())
+        .limit(1)
+    ).first()
+    return dict(row.content) if row else None

@@ -39,19 +39,19 @@ const KNOWN: Record<string, Omit<HumanError, "code">> = {
   },
   // --- sign-in (Better Auth) and the API proxy ---
   sign_in_required: {
-    title: "Please sign in",
-    message: "You need to be signed in to do that.",
-    action: "Sign in with your email to continue.",
+    title: "Please log in",
+    message: "You need to be logged in to do that.",
+    action: "Log in with your email to continue.",
   },
   session_expired: {
     title: "Your session expired",
-    message: "For your security, sign-ins don't last forever.",
-    action: "Sign in again.",
+    message: "For your security, logins don't last forever.",
+    action: "Log in again.",
   },
   admin_only: {
     title: "Admins only",
     message: "This area is for the SpecDesk team. Your account isn't on the admin list.",
-    action: "Go back to your plans, or sign in with an admin email.",
+    action: "Go back to your plans, or log in with an admin email.",
   },
   api_unreachable: {
     title: "SpecDesk's server isn't answering",
@@ -85,7 +85,7 @@ const KNOWN: Record<string, Omit<HumanError, "code">> = {
   },
   code_not_sent: {
     title: "We couldn't send your code",
-    message: "Something went wrong while emailing your sign-in code.",
+    message: "Something went wrong while emailing your login code.",
     action: "Wait a moment, then try again.",
   },
 };

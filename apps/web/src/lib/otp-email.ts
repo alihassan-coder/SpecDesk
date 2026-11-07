@@ -1,14 +1,14 @@
 /**
- * Sends the sign-in code through Brevo's transactional email API (https://developers.brevo.com).
+ * Sends the login code through Brevo's transactional email API (https://developers.brevo.com).
  * Without BREVO_API_KEY (local dev) the code is printed in the Next.js terminal instead.
  */
 export async function sendOtpEmail(email: string, otp: string): Promise<void> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
     if (process.env.NODE_ENV === "production") {
-      throw new Error("BREVO_API_KEY is not set, so sign-in codes can't be emailed.");
+      throw new Error("BREVO_API_KEY is not set, so login codes can't be emailed.");
     }
-    console.log(`\n[SpecDesk dev] Sign-in code for ${email}: ${otp}\n`);
+    console.log(`\n[SpecDesk dev] Login code for ${email}: ${otp}\n`);
     return;
   }
 
@@ -24,8 +24,8 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
       sender: { name: process.env.EMAIL_FROM_NAME || "SpecDesk", email: senderEmail },
       to: [{ email }],
       subject: `${otp} is your SpecDesk code`,
-      textContent: `Your SpecDesk sign-in code is ${otp}. It expires in 5 minutes. If you didn't ask for it, ignore this email.`,
-      htmlContent: `<p>Your SpecDesk sign-in code is</p><p style="font-size:24px;font-weight:600;letter-spacing:4px">${otp}</p><p>It expires in 5 minutes. If you didn't ask for it, ignore this email.</p>`,
+      textContent: `Your SpecDesk login code is ${otp}. It expires in 5 minutes. If you didn't ask for it, ignore this email.`,
+      htmlContent: `<p>Your SpecDesk login code is</p><p style="font-size:24px;font-weight:600;letter-spacing:4px">${otp}</p><p>It expires in 5 minutes. If you didn't ask for it, ignore this email.</p>`,
     }),
   });
   if (!res.ok) {
@@ -37,7 +37,7 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
     } catch {
       // no JSON body
     }
-    console.error(`[SpecDesk] Brevo rejected the sign-in email (HTTP ${res.status}) ${reason}`);
-    throw new Error(`Brevo rejected the sign-in email (HTTP ${res.status}).`);
+    console.error(`[SpecDesk] Brevo rejected the login email (HTTP ${res.status}) ${reason}`);
+    throw new Error(`Brevo rejected the login email (HTTP ${res.status}).`);
   }
 }

@@ -130,7 +130,9 @@ DEFAULT_CATALOG = ModelCatalog(
     ],
     default_model="groq:openai/gpt-oss-120b",
     fallback_models=["groq:openai/gpt-oss-20b"],
-    agent_effort={"interviewer": "medium"},
+    # The front desk only sorts messages, so it gets the small, fast model.
+    agent_models={"triage": "groq:openai/gpt-oss-20b"},
+    agent_effort={"interviewer": "medium", "triage": "low"},
 )
 
 

@@ -14,7 +14,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import BaseModel
 from sqlalchemy import text
 
-from app.agents.interviewer.schemas import InterviewerTurn
+from app.agents.interviewer.schemas import InterviewerTurn, Triage
 from app.agents.runtime.checkpointer import get_checkpointer
 from app.agents.service import get_ask_for_chat
 from app.db.models import Chat
@@ -34,6 +34,8 @@ class FakeEverything:
         self.planner = FakePlanner()
 
     def __call__(self, agent: str, schema: type[T], *, system: str, user: str) -> T:
+        if agent == "triage":  # the front desk accepts every test idea
+            return cast(T, Triage(kind="app_idea", title="Test plan"))
         if agent == "interviewer":
             return cast(T, InterviewerTurn(ready=True, why="Clear enough.", brief="- Web app"))
         return self.planner(agent, schema, system=system, user=user)
