@@ -5,7 +5,7 @@ Event names follow the contract in docs/ARCHITECTURE.md:
 """
 
 import logging
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from typing import Any
 
 from fastapi.sse import ServerSentEvent
@@ -14,6 +14,8 @@ from langgraph.types import Command, Interrupt
 
 from app.agents.interviewer.graph import InterviewGraph
 from app.agents.interviewer.nodes import InterviewContext, InterviewState
+from app.agents.planner.graph import PlanGraph
+from app.agents.planner.nodes import PlanContext, PlanState
 from app.core.errors import AppError, humanize
 
 logger = logging.getLogger("specdesk.agents")
@@ -55,6 +57,30 @@ def current_state_events(
         yield ServerSentEvent(event="question.round", data={"round": pending})
     if values.get("status") == "ready":
         yield ServerSentEvent(event="interview.done", data={"brief": values.get("brief", "")})
+
+
+def planning_events(
+    graph: PlanGraph,
+    payload: PlanState | None,
+    *,
+    config: RunnableConfig,
+    context: PlanContext,
+) -> Generator[ServerSentEvent, None, bool]:
+    """Run the planners, yielding their status and notes. Returns True when the plan is built."""
+    try:
+        for chunk in graph.stream(  # pyright: ignore[reportUnknownMemberType]
+            payload, config, context=context, stream_mode="custom"
+        ):
+            if isinstance(chunk, dict):
+                data: dict[str, Any] = dict(chunk)  # pyright: ignore[reportUnknownArgumentType]
+                yield ServerSentEvent(event=str(data.pop("type", "agent.note")), data=data)
+        return True
+    except AppError as exc:
+        yield ServerSentEvent(event="error", data=exc.error.model_dump())
+    except Exception:
+        logger.exception("Planning run failed")
+        yield ServerSentEvent(event="error", data=humanize("model_unavailable").model_dump())
+    return False
 
 
 def _interrupts(value: object) -> list[Interrupt]:

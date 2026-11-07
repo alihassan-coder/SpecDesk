@@ -1,15 +1,12 @@
+// Mock data for the guest demo only (/chat/demo, /plan/demo, /share/…). Signed-in users never see it.
 import type {
+  AgentId,
   Agent,
   ChatSummary,
-  Lead,
-  Memory,
   Plan,
   QuestionRound,
   StreamEvent,
 } from "./types";
-
-/** Fixed "now" for mock timestamps, so relative times render the same on server and client. */
-export const MOCK_NOW = new Date("2026-11-06T12:00:00Z");
 
 export const DEMO_IDEA =
   "An app for independent physiotherapists: patients book sessions, get a home exercise plan with videos, and the physio can see whether they actually did the exercises.";
@@ -22,8 +19,13 @@ export const AGENTS: Agent[] = [
   { id: "architect", name: "Architect", job: "Chooses the stack and explains why" },
   { id: "estimator", name: "Estimator", job: "Scores complexity, builds timeline and price" },
   { id: "critic", name: "Critic", job: "Finds risks and scores readiness" },
+  { id: "backlog", name: "Backlog", job: "Writes build-ready tickets in order" },
   { id: "researcher", name: "Researcher", job: "Scans competitors on the web" },
 ];
+
+/** The demo plays these agents; live chats use LIVE_AGENT_IDS (no web researcher yet). */
+export const DEMO_AGENT_IDS: AgentId[] = ["analyst", "product", "ux", "architect", "estimator", "critic", "researcher"];
+export const LIVE_AGENT_IDS: AgentId[] = ["analyst", "product", "architect", "ux", "estimator", "backlog", "critic"];
 
 export const ROUND_1: QuestionRound = {
   round: 1,
@@ -270,111 +272,3 @@ export const CHATS: ChatSummary[] = [
   { id: "c3", title: "AI meeting notes for lawyers", updatedAt: "2026-11-03T09:12:00Z", status: "interviewing" },
   { id: "c4", title: "School bus tracking app", updatedAt: "2026-10-28T14:20:00Z", status: "ready" },
 ];
-
-export const MEMORIES: Memory[] = [
-  { id: "m1", text: "Prefers React Native for mobile apps", scope: "long", createdAt: "2026-11-03" },
-  { id: "m2", text: "Budget usually under $20k for an MVP", scope: "long", createdAt: "2026-11-03" },
-  { id: "m3", text: "Building in the health-tech space", scope: "long", createdAt: "2026-11-06" },
-  { id: "m4", text: "Wants payments at booking time in Rehabit", scope: "short", createdAt: "2026-11-06" },
-];
-
-export const LEADS: Lead[] = [
-  {
-    id: "l1", name: "Sara Ahmed", email: "sara@rehabit.io", company: "Rehabit", role: "Founder, physiotherapist",
-    country: "United Arab Emirates", timezone: "Asia/Dubai (GMT+4)", source: "LinkedIn",
-    idea: "Physio booking and home-exercise app", budget: "$14k–19k", status: "booked",
-    signedUpAt: "2026-11-06T09:58:00Z", lastActiveAt: "2026-11-06T10:14:00Z",
-    plans: [{ id: "demo", title: "Rehabit", version: "v2", priceMin: 13900, priceMax: 18800, weeks: 11 }],
-    call: { at: "2026-11-10T07:00:00Z", status: "scheduled", meetUrl: "https://meet.google.com/abc-defg-hij" },
-    downloads: 3,
-    activity: [
-      { at: "2026-11-06T09:58:00Z", kind: "signup", text: "Signed in with email code" },
-      { at: "2026-11-06T10:02:00Z", kind: "plan", text: "Generated plan v1 · $17,400 – $23,600" },
-      { at: "2026-11-06T10:09:00Z", kind: "version", text: "Saved v2 · moved chat and video upload to later (−$4,800)" },
-      { at: "2026-11-06T10:11:00Z", kind: "file", text: "Downloaded Rehabit-plan.pdf and the ZIP" },
-      { at: "2026-11-06T10:14:00Z", kind: "booking", text: "Booked a call for Tue 10 Nov, 11:00 Dubai time" },
-    ],
-    notes: "Wants to launch with 5 physios in Dubai first. Asked about HIPAA vs. UAE data rules.",
-    createdAt: "2026-11-06",
-  },
-  {
-    id: "l2", name: "Tom Becker", email: "tom@lensloop.com", company: "LensLoop", role: "Co-founder",
-    country: "Germany", timezone: "Europe/Berlin (GMT+1)", source: "Google",
-    idea: "Peer-to-peer camera gear rental marketplace", budget: "$18k–24k", status: "new",
-    signedUpAt: "2026-11-05T15:20:00Z", lastActiveAt: "2026-11-05T16:40:00Z",
-    plans: [{ id: "c2", title: "LensLoop", version: "v1", priceMin: 18200, priceMax: 24600, weeks: 14 }],
-    downloads: 1,
-    activity: [
-      { at: "2026-11-05T15:20:00Z", kind: "signup", text: "Signed in with email code" },
-      { at: "2026-11-05T15:31:00Z", kind: "plan", text: "Generated plan v1 · $18,200 – $24,600" },
-      { at: "2026-11-05T16:40:00Z", kind: "file", text: "Downloaded spec.md" },
-    ],
-    createdAt: "2026-11-05",
-  },
-  {
-    id: "l3", name: "Priya Nair", email: "priya@brieflaw.ai", company: "BriefLaw", role: "CEO",
-    country: "United Kingdom", timezone: "Europe/London (GMT+0)", source: "Referral",
-    idea: "AI meeting notes for law firms", budget: "$25k–33k", status: "contacted",
-    signedUpAt: "2026-11-03T08:40:00Z", lastActiveAt: "2026-11-04T12:05:00Z",
-    plans: [{ id: "c3", title: "BriefLaw", version: "draft", priceMin: 25000, priceMax: 33800, weeks: 16 }],
-    call: { at: "2026-11-04T11:00:00Z", status: "done" },
-    downloads: 2,
-    activity: [
-      { at: "2026-11-03T08:40:00Z", kind: "signup", text: "Signed in with email code" },
-      { at: "2026-11-03T09:12:00Z", kind: "plan", text: "Started interview · 2 of 3 rounds answered" },
-      { at: "2026-11-03T09:30:00Z", kind: "booking", text: "Booked a call for Wed 4 Nov, 11:00 London time" },
-      { at: "2026-11-04T11:00:00Z", kind: "booking", text: "Call held · 34 minutes" },
-      { at: "2026-11-04T12:05:00Z", kind: "email", text: "Sent proposal email" },
-    ],
-    notes: "Needs SOC 2 path. Decision expected after their board meeting on 20 Nov.",
-    createdAt: "2026-11-03",
-  },
-  {
-    id: "l4", name: "Omar Khan", email: "omar@ridewise.pk", company: "RideWise", role: "Founder",
-    country: "Pakistan", timezone: "Asia/Karachi (GMT+5)", source: "Direct",
-    idea: "School bus tracking for parents", budget: "$9k–12k", status: "won",
-    signedUpAt: "2026-10-28T13:05:00Z", lastActiveAt: "2026-11-02T10:30:00Z",
-    plans: [{ id: "c4", title: "RideWise", version: "v3", priceMin: 9200, priceMax: 12400, weeks: 9 }],
-    call: { at: "2026-10-30T09:00:00Z", status: "done" },
-    downloads: 5,
-    activity: [
-      { at: "2026-10-28T13:05:00Z", kind: "signup", text: "Signed in with email code" },
-      { at: "2026-10-28T13:20:00Z", kind: "plan", text: "Generated plan v1" },
-      { at: "2026-10-29T08:10:00Z", kind: "version", text: "Saved v3 · added live arrival alerts" },
-      { at: "2026-10-30T09:00:00Z", kind: "booking", text: "Call held · 41 minutes" },
-      { at: "2026-11-02T10:30:00Z", kind: "note", text: "Signed contract · kickoff 16 Nov" },
-    ],
-    createdAt: "2026-10-28",
-  },
-];
-
-export const MODEL_OPTIONS = [
-  "anthropic/claude-sonnet-5-5",
-  "anthropic/claude-opus-5-5",
-  "anthropic/claude-haiku-5-5",
-  "openai/gpt-5",
-  "gemini/gemini-2.5-pro",
-  "groq/llama-3.3-70b",
-];
-
-export type KeySource = "db" | "env" | "missing";
-
-export const PROVIDER_KEYS: { provider: string; label: string; masked: string | null; source: KeySource; ok: boolean | null }[] = [
-  { provider: "anthropic", label: "Anthropic", masked: "sk-ant-…a9F2", source: "db", ok: true },
-  { provider: "openai", label: "OpenAI", masked: "sk-…71Qd", source: "env", ok: true },
-  { provider: "gemini", label: "Google Gemini", masked: null, source: "missing", ok: null },
-  { provider: "groq", label: "Groq", masked: null, source: "missing", ok: null },
-  { provider: "openrouter", label: "OpenRouter", masked: null, source: "missing", ok: null },
-  { provider: "tavily", label: "Tavily (web search)", masked: "tvly-…0c3e", source: "db", ok: true },
-];
-
-export const AGENT_MODELS: Record<string, string> = {
-  interviewer: "anthropic/claude-sonnet-5-5",
-  analyst: "anthropic/claude-sonnet-5-5",
-  product: "anthropic/claude-sonnet-5-5",
-  ux: "anthropic/claude-haiku-5-5",
-  architect: "anthropic/claude-opus-5-5",
-  estimator: "anthropic/claude-sonnet-5-5",
-  critic: "anthropic/claude-sonnet-5-5",
-  researcher: "anthropic/claude-haiku-5-5",
-};

@@ -16,7 +16,7 @@ class Answer(BaseModel):
     text: str
 
 
-OPUS, SONNET = "anthropic:claude-opus-5-5", "anthropic:claude-sonnet-5-5"
+PRIMARY, FALLBACK = "groq:openai/gpt-oss-120b", "groq:openai/gpt-oss-20b"
 
 
 def runner_that(behaviour: dict[str, object]):
@@ -45,7 +45,7 @@ def gateway(
     behaviour: dict[str, object], *, keys: dict[str, str] | None = None
 ) -> tuple[ModelGateway, list[CallRecord]]:
     records: list[CallRecord] = []
-    available = {"anthropic": "sk-test"} if keys is None else keys
+    available = {"groq": "gsk-test"} if keys is None else keys
     gw = ModelGateway(
         DEFAULT_CATALOG,
         keys=lambda p: SecretStr(available[p]) if p in available else None,
@@ -56,37 +56,37 @@ def gateway(
 
 
 def test_first_model_answers() -> None:
-    gw, records = gateway({OPUS: Answer(text="hi"), SONNET: Answer(text="unused")})
+    gw, records = gateway({PRIMARY: Answer(text="hi"), FALLBACK: Answer(text="unused")})
     assert gw("interviewer", Answer, system="s", user="u") == Answer(text="hi")
-    assert [(r.model_id, r.ok) for r in records] == [(OPUS, True)]
-    # 1000 in × $4 + 100 out × $20 per million
-    assert records[0].cost_usd == Decimal("0.006000")
+    assert [(r.model_id, r.ok) for r in records] == [(PRIMARY, True)]
+    # 1000 in × $0.15 + 100 out × $0.60 per million
+    assert records[0].cost_usd == Decimal("0.000210")
 
 
 def test_falls_back_when_the_first_model_errors_or_returns_garbage() -> None:
-    gw, records = gateway({OPUS: TimeoutError("slow"), SONNET: Answer(text="from sonnet")})
-    assert gw("interviewer", Answer, system="s", user="u").text == "from sonnet"
+    gw, records = gateway({PRIMARY: TimeoutError("slow"), FALLBACK: Answer(text="from fallback")})
+    assert gw("interviewer", Answer, system="s", user="u").text == "from fallback"
     assert [(r.model_id, r.ok, r.error) for r in records] == [
-        (OPUS, False, "TimeoutError"),
-        (SONNET, True, None),
+        (PRIMARY, False, "TimeoutError"),
+        (FALLBACK, True, None),
     ]
 
-    gw, records = gateway({OPUS: None, SONNET: Answer(text="ok")})
+    gw, records = gateway({PRIMARY: None, FALLBACK: Answer(text="ok")})
     assert gw("interviewer", Answer, system="s", user="u").text == "ok"
     assert records[0].error == "unparseable"
 
 
 def test_every_model_failing_is_a_humanized_error() -> None:
-    gw, _ = gateway({OPUS: RuntimeError("x"), SONNET: RuntimeError("y")})
+    gw, _ = gateway({PRIMARY: RuntimeError("x"), FALLBACK: RuntimeError("y")})
     with pytest.raises(AppError) as err:
         gw("interviewer", Answer, system="s", user="u")
     assert err.value.error.code == "model_unavailable"
 
 
 def test_missing_keys_tell_the_admin_what_to_do() -> None:
-    gw, records = gateway({OPUS: Answer(text="never")}, keys={})
+    gw, records = gateway({PRIMARY: Answer(text="never")}, keys={})
     with pytest.raises(AppError) as err:
         gw("interviewer", Answer, system="s", user="u")
     assert err.value.error.code == "model_not_configured"
-    assert "anthropic" in err.value.error.message
+    assert "groq" in err.value.error.message
     assert records == []  # no call was attempted

@@ -29,7 +29,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       <Suspense fallback={<SidebarFallback />}>
         <AppSidebar />
       </Suspense>
-      <SidebarInset className="min-h-svh bg-transparent">
+      <SidebarInset className="min-h-svh min-w-0 overflow-x-clip bg-transparent">
         <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/60 px-4 backdrop-blur-xl backdrop-saturate-150">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
@@ -40,7 +40,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
             <ThemeToggle />
           </div>
         </header>
-        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

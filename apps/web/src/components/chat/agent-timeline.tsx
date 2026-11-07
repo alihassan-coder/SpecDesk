@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Brain, Check, ChevronDown, CircleDashed, Loader2, TriangleAlert } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { AGENTS } from "@/mocks/data";
+import { AGENTS, DEMO_AGENT_IDS } from "@/mocks/data";
 import type { AgentId, AgentStatus, StreamEvent } from "@/mocks/types";
 import { cn } from "@/lib/utils";
 
@@ -13,9 +13,9 @@ interface AgentState {
   reasoning: string[];
 }
 
-export function deriveAgents(events: StreamEvent[]) {
+export function deriveAgents(events: StreamEvent[], ids: AgentId[] = DEMO_AGENT_IDS) {
   const state = new Map<AgentId, AgentState>();
-  for (const a of AGENTS) if (a.id !== "interviewer") state.set(a.id, { status: "queued", notes: [], reasoning: [] });
+  for (const id of ids) state.set(id, { status: "queued", notes: [], reasoning: [] });
   for (const e of events) {
     if (e.type !== "agent.status" && e.type !== "agent.note" && e.type !== "agent.reasoning") continue;
     const s = state.get(e.agent);
@@ -41,8 +41,16 @@ const statusLabel: Record<AgentStatus, string> = {
   error: "Needs attention",
 };
 
-export function AgentTimeline({ events, running }: { events: StreamEvent[]; running: boolean }) {
-  const agents = useMemo(() => deriveAgents(events), [events]);
+export function AgentTimeline({
+  events,
+  running,
+  agentIds = DEMO_AGENT_IDS,
+}: {
+  events: StreamEvent[];
+  running: boolean;
+  agentIds?: AgentId[];
+}) {
+  const agents = useMemo(() => deriveAgents(events, agentIds), [events, agentIds]);
   const done = [...agents.values()].filter((a) => a.status === "done").length;
   const total = agents.size;
   const [open, setOpen] = useState(true);
@@ -56,7 +64,7 @@ export function AgentTimeline({ events, running }: { events: StreamEvent[]; runn
           ) : (
             <Check className="size-4 text-success" aria-hidden="true" />
           )}
-          <span className="text-sm font-medium">{running ? "Agents are drafting your plan" : "Plan drafted by 7 agents"}</span>
+          <span className="text-sm font-medium">{running ? "Agents are drafting your plan" : `Plan drafted by ${total} agents`}</span>
           <span className="text-xs text-muted-foreground tabular-nums">
             {done}/{total}
           </span>
@@ -70,7 +78,7 @@ export function AgentTimeline({ events, running }: { events: StreamEvent[]; runn
 
       <CollapsibleContent>
         <ol className="space-y-1 p-2" aria-live="polite">
-          {AGENTS.filter((a) => a.id !== "interviewer").map((meta) => {
+          {AGENTS.filter((a) => agents.has(a.id)).map((meta) => {
             const s = agents.get(meta.id)!;
             return (
               <li

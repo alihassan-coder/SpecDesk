@@ -128,15 +128,21 @@ Fill in the values. **Never put real secrets in `.env.example`** — it is commi
 
 ### 3. Run
 
-```bash
-pnpm dev:web                      # http://localhost:3000
+First time only (backend):
 
-# backend (from M2)
-cd apps/api
-uv sync
-uv run alembic upgrade head
-uv run uvicorn app.main:app --reload --port 8000
+```bash
+cd apps/api && uv sync && uv run alembic upgrade head && cd ../..
 ```
+
+Then, from the repo root:
+
+```bash
+pnpm dev        # website + API together
+pnpm dev:web    # website only → http://localhost:3000
+pnpm dev:api    # API only     → http://localhost:8000 (docs at /api/v1/docs)
+```
+
+Without an email key set, sign-in codes are printed in the terminal.
 
 ## Roadmap
 

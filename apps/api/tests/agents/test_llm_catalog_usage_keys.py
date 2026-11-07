@@ -12,24 +12,29 @@ from app.core.errors import AppError
 # ---------- catalog ----------
 
 
-def test_default_catalog_uses_opus_then_falls_back_to_sonnet() -> None:
+BIG, SMALL = "groq:openai/gpt-oss-120b", "groq:openai/gpt-oss-20b"
+
+
+def test_default_catalog_uses_groq_120b_then_falls_back_to_20b() -> None:
     chain = DEFAULT_CATALOG.chain_for("interviewer")
-    assert [m.id for m in chain] == ["anthropic:claude-opus-5-5", "anthropic:claude-sonnet-5-5"]
+    assert [m.id for m in chain] == [BIG, SMALL]
+
+
+def test_switched_off_claude_models_are_skipped() -> None:
+    catalog = DEFAULT_CATALOG.model_copy(update={"default_model": "anthropic:claude-opus-5-5"})
+    assert [m.id for m in catalog.chain_for("interviewer")] == [SMALL]
 
 
 def test_agent_override_disabled_models_and_providers() -> None:
     catalog = DEFAULT_CATALOG.model_copy(
         update={
-            "agent_models": {"critic": "anthropic:claude-haiku-5-5"},
-            "fallback_models": ["anthropic:claude-opus-5-5"],
+            "agent_models": {"critic": SMALL},
+            "fallback_models": [BIG],
         }
     )
-    assert [m.id for m in catalog.chain_for("critic")] == [
-        "anthropic:claude-haiku-5-5",
-        "anthropic:claude-opus-5-5",
-    ]
+    assert [m.id for m in catalog.chain_for("critic")] == [SMALL, BIG]
 
-    off = catalog.model_copy(update={"disabled_providers": ["anthropic"]})
+    off = catalog.model_copy(update={"disabled_providers": ["groq"]})
     with pytest.raises(AppError) as err:
         off.chain_for("critic")
     assert err.value.error.code == "model_not_configured"

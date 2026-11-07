@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     admin_emails: CommaList = []
     cors_origins: CommaList = ["http://localhost:3000"]
     secrets_encryption_key: SecretStr | None = None  # required from M7 (admin keys)
+    # Better Auth's JWT plugin (apps/web). It signs with iss = aud = BETTER_AUTH_URL.
+    auth_jwks_url: str = "http://localhost:3000/api/auth/jwks"
+    auth_issuer: str = "http://localhost:3000"
+    auth_audience: str = "http://localhost:3000"
 
     @field_validator("database_url", "database_url_unpooled", mode="before")
     @classmethod

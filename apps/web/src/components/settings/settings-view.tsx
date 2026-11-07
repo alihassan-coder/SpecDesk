@@ -20,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ACCENT_PRESETS, type ChatWidth, type Density, type FontChoice } from "@/lib/appearance";
-import { MEMORIES } from "@/mocks/data";
+import type { Memory } from "@/mocks/types";
 import { cn } from "@/lib/utils";
 import { SettingRow } from "./setting-row";
 
@@ -333,7 +333,8 @@ function NotificationSettings() {
 /* ---------------- Memory ---------------- */
 
 function MemorySettings() {
-  const [items, setItems] = useState(MEMORIES);
+  // Memory (Mem0) isn't built yet, so there is nothing real to list.
+  const [items, setItems] = useState<Memory[]>([]);
   return (
     <Card>
       <CardHeader>
@@ -349,8 +350,8 @@ function MemorySettings() {
               <EmptyMedia variant="icon">
                 <Brain />
               </EmptyMedia>
-              <EmptyTitle>Nothing remembered</EmptyTitle>
-              <EmptyDescription>They appear as you plan.</EmptyDescription>
+              <EmptyTitle>Nothing remembered yet</EmptyTitle>
+              <EmptyDescription>Memory is coming soon: facts from your plans (like your industry or preferred stack) will show here.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : (

@@ -23,8 +23,9 @@ pytestmark = pytest.mark.skipif(
 
 def test_real_model_asks_a_valid_first_round() -> None:
     environ = provider_environ()
-    if resolve_api_key("anthropic", session=None, cipher=None, environ=environ) is None:
-        pytest.skip("ANTHROPIC_API_KEY is not set in apps/api/.env")
+    provider = DEFAULT_CATALOG.chain_for("interviewer")[0].provider
+    if resolve_api_key(provider, session=None, cipher=None, environ=environ) is None:
+        pytest.skip(f"No API key for {provider} in apps/api/.env")
     calls: list[CallRecord] = []
     gateway = ModelGateway(
         DEFAULT_CATALOG,

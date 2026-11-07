@@ -15,7 +15,7 @@
                 │   • Mem0 memory (pgvector on Neon)                     │
                 │   • Pricing engine (pricing.yaml)                      │
                 │   • Files: WeasyPrint PDF, MD, CSV, ZIP                │
-                │   • Webhooks: Calendly · Email: Resend · Search: Tavily│
+                │   • Webhooks: Calendly · Email: Brevo  · Search: Tavily│
                 └───────────────┬────────────────────────────────────────┘
                                 ▼
                          Neon Postgres (+ pgvector)
@@ -40,7 +40,7 @@ SpecDesk/
 |---|---|
 | UI kit | shadcn/ui + **AI Elements** (chat, reasoning, tool/task steps, artifact) |
 | Streaming | SSE from FastAPI, consumed with Vercel AI SDK (`useChat`) / EventSource |
-| Auth | **Better Auth** — Email OTP plugin (Resend) + JWT plugin; FastAPI verifies via JWKS |
+| Auth | **Better Auth** — Email OTP plugin (Brevo) + JWT plugin; FastAPI verifies via JWKS |
 | LLMs | **LiteLLM** — provider keys from env, model per agent, fallbacks |
 | Memory | **Mem0** OSS Python SDK; short-term = recent messages + summary; long-term = Mem0 facts |
 | DB | Neon Postgres; Better Auth owns auth tables; SQLAlchemy 2 + Alembic own app tables |

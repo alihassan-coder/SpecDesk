@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.errors import ErrorBody, install_error_handlers
-from app.routers import chats, health, pricing
+from app.routers import admin, chats, health, plans, pricing
 
 API_PREFIX = "/api/v1"
 
@@ -36,6 +36,8 @@ def create_app() -> FastAPI:
     api.include_router(health.router)
     api.include_router(pricing.router)
     api.include_router(chats.router)
+    api.include_router(plans.router)
+    api.include_router(admin.router)
     app.include_router(api)
     return app
 

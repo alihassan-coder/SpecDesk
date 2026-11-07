@@ -262,7 +262,7 @@ export function ChatView({
   );
 }
 
-function UserBubble({ text }: { text: string }) {
+export function UserBubble({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
       <p className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-line text-primary-foreground">{text}</p>
@@ -270,7 +270,7 @@ function UserBubble({ text }: { text: string }) {
   );
 }
 
-function AssistantMessage({ children }: { children: React.ReactNode }) {
+export function AssistantMessage({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex gap-3">
       <LogoMark className="mt-0.5 size-6 rounded-md [&_svg]:size-4" />

@@ -37,6 +37,57 @@ const KNOWN: Record<string, Omit<HumanError, "code">> = {
     message: "You can only open plans you created or that were shared with you.",
     action: "Ask the owner for a share link.",
   },
+  // --- sign-in (Better Auth) and the API proxy ---
+  sign_in_required: {
+    title: "Please sign in",
+    message: "You need to be signed in to do that.",
+    action: "Sign in with your email to continue.",
+  },
+  session_expired: {
+    title: "Your session expired",
+    message: "For your security, sign-ins don't last forever.",
+    action: "Sign in again.",
+  },
+  admin_only: {
+    title: "Admins only",
+    message: "This area is for the SpecDesk team. Your account isn't on the admin list.",
+    action: "Go back to your plans, or sign in with an admin email.",
+  },
+  api_unreachable: {
+    title: "SpecDesk's server isn't answering",
+    message: "The website couldn't reach the planning API. It may be stopped or restarting.",
+    action: "Try again in a moment.",
+  },
+  invalid_email: {
+    title: "Check your email address",
+    message: "That doesn't look like an email address.",
+    action: "Fix any typos and try again.",
+  },
+  invalid_otp: {
+    title: "That code isn't right",
+    message: "It doesn't match the latest code we emailed you.",
+    action: "Check the newest email from SpecDesk, or send a new code.",
+  },
+  otp_expired: {
+    title: "That code has expired",
+    message: "Codes only work for 5 minutes.",
+    action: "Send a new code and enter it right away.",
+  },
+  too_many_attempts: {
+    title: "Too many tries",
+    message: "That code is locked after several wrong attempts.",
+    action: "Send a new code and try again.",
+  },
+  too_many_codes: {
+    title: "Slow down a little",
+    message: "You've asked for several codes in a short time.",
+    action: "Wait a minute, then try again.",
+  },
+  code_not_sent: {
+    title: "We couldn't send your code",
+    message: "Something went wrong while emailing your sign-in code.",
+    action: "Wait a moment, then try again.",
+  },
 };
 
 export function humanize(code: string): HumanError {

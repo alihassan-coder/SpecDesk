@@ -24,6 +24,11 @@ def build_chat_model(entry: ModelEntry, api_key: SecretStr, effort: Effort) -> B
         # `effort` sets output_config.effort and turns on adaptive thinking with summarized
         # reasoning, which the UI shows as "why it decided this".
         kwargs |= {"effort": effort, "max_tokens": MAX_OUTPUT_TOKENS}
+    elif entry.provider == "groq":
+        # GPT-OSS reasoning models take low / medium / high.
+        level = effort if effort in ("low", "medium", "high") else "high"
+        # One retry only: on a rate limit, moving to the fallback model is faster than waiting.
+        kwargs |= {"reasoning_effort": level, "max_tokens": MAX_OUTPUT_TOKENS, "max_retries": 1}
     return cast(BaseChatModel, init_chat_model(entry.name, model_provider=entry.provider, **kwargs))
 
 

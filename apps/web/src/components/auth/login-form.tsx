@@ -5,62 +5,117 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft, Mail } from "lucide-react";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { useDemoSession } from "@/components/providers/demo-session";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import { Spinner } from "@/components/ui/spinner";
+import { authClient } from "@/lib/auth-client";
+import { humanize, type HumanError } from "@/lib/errors";
 
-/**
- * M1: simulated. M3 wires this to Better Auth's emailOTP plugin:
- *   authClient.emailOtp.sendVerificationOtp({ email, type: "sign-in" })
- *   authClient.signIn.emailOtp({ email, otp })
- */
+/** Only same-site relative paths, so `?next=` can't send people to another site. */
+function safeNext(next: string | null): string | null {
+  if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return null;
+  return next;
+}
+
+/** Better Auth error → humanized error. Codes come from the emailOTP plugin and core. */
+function authError(error: { code?: string; status?: number }, fallback: string): HumanError {
+  if (error.status === 429) return humanize("too_many_codes");
+  switch (error.code) {
+    case "INVALID_EMAIL":
+      return humanize("invalid_email");
+    case "INVALID_OTP":
+      return humanize("invalid_otp");
+    case "OTP_EXPIRED":
+      return humanize("otp_expired");
+    case "TOO_MANY_ATTEMPTS":
+      return humanize("too_many_attempts");
+    default:
+      return humanize(fallback);
+  }
+}
+
+function ErrorText({ error, className }: { error: HumanError; className?: string }) {
+  return (
+    <FieldError className={className}>
+      <span className="font-medium">{error.title}.</span> {error.message} {error.action}
+    </FieldError>
+  );
+}
+
+/** Email → 6-digit code, via Better Auth's emailOTP plugin. */
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const idea = params.get("idea");
-  const { setRole } = useDemoSession();
+  const next = safeNext(params.get("next"));
 
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<HumanError | null>(null);
+  const [resent, setResent] = useState(false);
 
   const sendCode = async () => {
     setError(null);
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setError("That doesn't look like an email address. Check for typos.");
+    const address = email.trim();
+    if (!/^\S+@\S+\.\S+$/.test(address)) {
+      setError(humanize("invalid_email"));
       return;
     }
     setBusy(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setBusy(false);
-    setStep("code");
+    try {
+      const { error: err } = await authClient.emailOtp.sendVerificationOtp({ email: address, type: "sign-in" });
+      if (err) {
+        setError(authError(err, "code_not_sent"));
+        return;
+      }
+      setResent(step === "code");
+      setCode("");
+      setStep("code");
+    } catch {
+      setError(humanize("network"));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const verify = async (value: string) => {
     setError(null);
+    setResent(false);
     setBusy(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setBusy(false);
-    if (value === "000000") {
-      setError("That code isn't right. Check the latest email from SpecDesk, or send a new code.");
-      setCode("");
-      return;
+    try {
+      const { error: err } = await authClient.signIn.emailOtp({ email: email.trim(), otp: value });
+      if (err) {
+        setError(authError(err, "invalid_otp"));
+        setCode("");
+        return;
+      }
+      router.replace(next ?? (idea ? `/chat/new?idea=${encodeURIComponent(idea)}` : "/chat"));
+      router.refresh();
+    } catch {
+      setError(humanize("network"));
+    } finally {
+      setBusy(false);
     }
-    setRole(email.trim().toLowerCase() === "alihassan.coder@gmail.com" ? "admin" : "founder");
-    router.push(idea ? `/chat/new?idea=${encodeURIComponent(idea)}` : "/chat");
   };
 
   if (step === "code") {
     return (
       <Card className="glass w-full max-w-sm">
         <CardHeader>
-          <Button variant="ghost" size="sm" className="-ml-2 mb-1 w-fit text-muted-foreground" onClick={() => setStep("email")}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 mb-1 w-fit text-muted-foreground"
+            onClick={() => {
+              setError(null);
+              setStep("email");
+            }}
+          >
             <ArrowLeft /> Change email
           </Button>
           <CardTitle className="text-xl">Check your email</CardTitle>
@@ -98,10 +153,10 @@ export function LoginForm() {
                 </InputOTPGroup>
               </InputOTP>
               {error ? (
-                <FieldError className="text-center">{error}</FieldError>
+                <ErrorText error={error} className="text-center" />
               ) : (
-                <FieldDescription className="text-center">
-                  {busy ? "Checking…" : "Demo: any code except 000000"}
+                <FieldDescription className="text-center" aria-live="polite">
+                  {busy ? "Checking…" : resent ? "New code sent. It expires in 5 minutes." : "Enter the 6-digit code. It expires in 5 minutes."}
                 </FieldDescription>
               )}
             </Field>
@@ -142,7 +197,7 @@ export function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 aria-invalid={!!error}
               />
-              {error && <FieldError>{error}</FieldError>}
+              {error && <ErrorText error={error} />}
             </Field>
             <Field>
               <Button type="submit" disabled={busy}>

@@ -97,10 +97,11 @@ Every milestone ends with a **review gate**: the user checks it, then we move on
 - **Status (2026-11-07):** done — FastAPI app (config, humanized errors, health + DB health, pricing engine + `POST /pricing/estimate`), SQLAlchemy models for all app tables, first Alembic migration applied to Neon main with `alembic check` clean. Open — typed OpenAPI client in `apps/web`, Vercel preview deploy, Neon branch per PR in CI.
 
 ### M3 — Auth & security
-- Better Auth (Email OTP via Resend + JWT plugin), sessions in Neon.
+- Better Auth (Email OTP via Brevo + JWT plugin), sessions in Neon.
 - FastAPI verifies JWT via JWKS; ownership checks on every resource; admin role from `ADMIN_EMAILS`.
 - Rate limiting on OTP + generation.
 - **Done when:** user A cannot read user B's chat (tested).
+- **Status (2026-11-07):** done except rate limiting — Better Auth email OTP (Brevo, or code in the terminal in dev), JWT + JWKS in FastAPI, proxy, route protection, admin from `ADMIN_EMAILS`; cross-user test passes.
 
 ### M4 — AI pipeline
 - LiteLLM multi-provider (keys from env, model per agent, fallback).
@@ -108,14 +109,16 @@ Every milestone ends with a **review gate**: the user checks it, then we move on
 - SSE events: `agent.status`, `agent.note`, `agent.reasoning`, `token`, `question.round`, `file.ready`, `error`.
 - Mem0 (OSS) short + long-term memory, pgvector on Neon.
 - **Done when:** real idea → real plan end-to-end in < 3 min.
+- **Status (2026-11-07):** interviewer + 7 planning agents live on Groq via LangChain/LangGraph (not LiteLLM — decisions 36-41); ≈ 2 min end to end. Open: scope guard, `agent.reasoning`, Mem0.
 
 ### M5 — Files, plan tools & sharing
 - PDF/MD/CSV/JSON/Mermaid/ZIP generation, artifact panel wired to real files.
 - Pricing engine (`pricing.yaml`), live sliders, versions & diff, share links, competitor scan, architect chat.
 - **Done when:** all downloads open correctly; slider changes persist as a new version.
+- **Status (2026-11-07):** MD/CSV/JSON/Mermaid/ZIP downloads and saved versions work. Open: PDF, share links, version diff view, competitor web scan, architect chat.
 
 ### M6 — Booking, leads & admin
-- Calendly embed (chat card + sidebar), webhook → bookings + leads, Resend email to agency.
+- Calendly embed (chat card + sidebar), webhook → bookings + leads, Brevo email to agency.
 - Admin: leads, plans, bookings, **API keys (encrypted, masked, test button)**, model selection per agent, pricing, usage/cost.
 - **Done when:** a test booking appears in admin and arrives by email.
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarCheck, FileText, LayoutDashboard, Plus, Settings, ShieldCheck, Sparkles } from "lucide-react";
 import { BookingDialog } from "@/components/booking/booking-dialog";
 import { LogoMark } from "@/components/brand/logo";
@@ -20,15 +20,32 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { api, type LiveChatSummary } from "@/lib/api";
 import { CHATS } from "@/mocks/data";
 import { NavUser } from "./nav-user";
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { role } = useDemoSession();
+  const { role, isPending } = useDemoSession();
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [liveChats, setLiveChats] = useState<LiveChatSummary[] | null>(null);
+  const signedIn = !isPending && role !== "guest";
 
-  const chats = role === "guest" ? CHATS.filter((c) => c.id === "demo") : CHATS;
+  // Signed-in founders see their real chats; refreshed on navigation so a new chat shows up.
+  useEffect(() => {
+    if (!signedIn) return;
+    let cancelled = false;
+    api.listChats().then(
+      (rows) => !cancelled && setLiveChats(rows),
+      () => !cancelled && setLiveChats((prev) => prev ?? []),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [signedIn, pathname]);
+
+  const chats: { id: string; title: string }[] = signedIn ? (liveChats ?? []) : CHATS.filter((c) => c.id === "demo");
+  const latestPlan = liveChats?.find((c) => c.planId)?.planId;
 
   return (
     <Sidebar collapsible="icon">
@@ -61,7 +78,7 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {role !== "admin" && (
+              {!signedIn && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === "/chat/demo"} tooltip="Demo plan">
                   <Link href="/chat/demo">
@@ -77,14 +94,16 @@ export function AppSidebar() {
                   <span>Book a call</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith("/plan")} tooltip="Plan workspace">
-                  <Link href="/plan/demo">
-                    <LayoutDashboard />
-                    <span>Plan workspace</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {(!signedIn || latestPlan) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith("/plan")} tooltip="Plan workspace">
+                    <Link href={signedIn && latestPlan ? `/plan/${latestPlan}` : "/plan/demo"}>
+                      <LayoutDashboard />
+                      <span>Plan workspace</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -93,6 +112,9 @@ export function AppSidebar() {
           <SidebarGroupLabel>Recent plans</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              {signedIn && liveChats?.length === 0 && (
+                <p className="px-2 py-1 text-xs text-muted-foreground">No plans yet. Start one with New plan.</p>
+              )}
               {chats.map((c) => (
                 <SidebarMenuItem key={c.id}>
                   <SidebarMenuButton asChild isActive={pathname === `/chat/${c.id}`}>

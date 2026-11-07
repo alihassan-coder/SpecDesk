@@ -72,7 +72,7 @@ Skill methods are re-written in our own words and our JSON format, stored as ver
   (structured output, thinking, web search).
 - **Default model** for every agent, **per-agent override**, **fallback chain**.
 - Capability guard: the Researcher needs a web-search-capable model; Admin warns if the chosen one can't.
-- Defaults shipped: `anthropic:claude-opus-5-5` with effort tuned per agent.
+- Defaults shipped: `groq:openai/gpt-oss-120b` → fallback `groq:openai/gpt-oss-20b` (decision 41). Claude models are listed but switched off.
 
 ## Streaming → SSE mapping
 
@@ -90,7 +90,13 @@ Skill methods are re-written in our own words and our JSON format, stored as ver
 - ✅ **Step 1–2 done (2026-11-07):** model catalog (default, per-agent override, fallback chain,
   effort), key lookup (encrypted DB → `.env`), `ModelGateway` with cost records, interviewer graph
   (`interviewer` + `ask_founder` with `interrupt()`), Postgres checkpointer on Neon, SSE endpoints.
-  58 tests (fake model, no key needed) + 1 opt-in live test. Needs an `ANTHROPIC_API_KEY` to run for real.
+  59 tests (fake model, no key needed) + 1 opt-in live test, passing on Groq. Verified end to end over HTTP: idea → round 1 → answers → round 2 → brief.
+
+- ✅ **Step 4 done (2026-11-07):** planning graph (analyst, product, architect, ux, estimator,
+  backlog, critic → assemble), priced by the pricing engine, saved as plan v1; files generated on
+  request; scope changes saved as new versions. Wired to the website end to end (chat → questions →
+  agents → plan → files). Live run on Groq: about 25 s interview + 85 s planning, ≈ $0.01 per plan.
+- ⏳ Not yet: scope guard (step 3), researcher with web search (step 5), Mem0 (step 6), architect chat (step 7).
 
 ## Build order (each step demoable)
 

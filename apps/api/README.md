@@ -13,7 +13,7 @@ Secrets live in `apps/api/.env` (gitignored). Variables: see the repo-root `.env
 
 ## Run
 ```bash
-uv run uvicorn app.main:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 8000   # or `pnpm dev:api` from the repo root
 # http://localhost:8000/api/v1/health      liveness
 # http://localhost:8000/api/v1/health/db   runs SELECT 1 against Neon
 # http://localhost:8000/api/v1/docs        Swagger UI (OpenAPI JSON at /api/v1/openapi.json)

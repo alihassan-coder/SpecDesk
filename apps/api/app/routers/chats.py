@@ -5,10 +5,13 @@ Flow for the browser:
 2. `POST /chats/{id}/interview` → SSE stream until the first `question.round` (or `interview.done`).
    Calling it again later re-sends where the chat stands, without another model call.
 3. `POST /chats/{id}/answers` → SSE stream until the next round or `interview.done`.
+4. `POST /chats/{id}/plan` → SSE stream of the planning agents, then `file.ready` events and
+   `done` with the plan id. Calling it again after it finished just re-sends `done`.
 """
 
 import uuid
 from collections.abc import Callable, Iterator
+from datetime import datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends
@@ -17,19 +20,23 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.types import Command
 from pydantic import Field
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.agents.interviewer.graph import InterviewGraph, build_interview_graph
 from app.agents.interviewer.nodes import InterviewContext, InterviewState, resume_payload
 from app.agents.interviewer.schemas import Answer, CamelModel
 from app.agents.llm.ask import AskModel
+from app.agents.planner.graph import build_plan_graph, plan_thread_id
+from app.agents.planner.nodes import PlanContext, PlanState
 from app.agents.runtime.checkpointer import get_checkpointer
-from app.agents.runtime.events import current_state_events, interview_events
+from app.agents.runtime.events import current_state_events, interview_events, planning_events
 from app.agents.service import get_ask_for_chat
 from app.core.errors import AppError
 from app.core.owner import Owner
-from app.db.models import Chat, Message
-from app.db.session import get_session
+from app.db.models import Chat, Message, Plan
+from app.db.session import get_session, session_scope
+from app.services.plans import current_version, file_cards, plan_for_chat, save_first_version
 
 router = APIRouter(prefix="/chats", tags=["chats"])
 
@@ -51,6 +58,8 @@ class ChatSummary(CamelModel):
     id: uuid.UUID
     title: str
     status: str
+    updated_at: datetime | None = None
+    plan_id: uuid.UUID | None = None
 
 
 class ChatDetail(ChatSummary):
@@ -136,15 +145,36 @@ def start_chat(body: StartChat, owner: Owner, session: SessionDep) -> ChatSummar
     return ChatSummary(id=chat.id, title=chat.title, status=chat.status)
 
 
+@router.get("")
+def list_chats(owner: Owner, session: SessionDep) -> list[ChatSummary]:
+    """The owner's chats, newest first, for the sidebar."""
+    rows = session.execute(
+        select(Chat, Plan.id)
+        .outerjoin(Plan, Plan.chat_id == Chat.id)
+        .where(Chat.owner_id == owner)
+        .order_by(Chat.updated_at.desc())
+        .limit(100)
+    ).all()
+    return [
+        ChatSummary(
+            id=c.id, title=c.title, status=c.status, updated_at=c.updated_at, plan_id=plan_id
+        )
+        for c, plan_id in rows
+    ]
+
+
 @router.get("/{chat_id}")
-def get_chat(chat: OwnedChat, checkpointer: CheckpointerDep) -> ChatDetail:
+def get_chat(chat: OwnedChat, session: SessionDep, checkpointer: CheckpointerDep) -> ChatDetail:
     values: dict[str, Any] = dict(
         build_interview_graph(checkpointer).get_state(_thread(chat)).values
     )
+    plan = plan_for_chat(session, chat.id)
     return ChatDetail(
         id=chat.id,
         title=chat.title,
         status=chat.status,
+        updated_at=chat.updated_at,
+        plan_id=plan.id if plan else None,
         idea=chat.idea,
         rounds=values.get("rounds", []),
         pending=values.get("pending"),
@@ -187,6 +217,66 @@ def send_answers(
         qid: a.model_dump(by_alias=True, exclude_none=True) for qid, a in body.answers.items()
     }
     yield from _run(graph, Command(resume=resume_payload(answers)), config, context)
+
+
+def interview_finished(chat: OwnedChat, checkpointer: CheckpointerDep) -> str:
+    """The interview's brief. Planning can only start once the interview has one."""
+    values = build_interview_graph(checkpointer).get_state(_thread(chat)).values
+    brief = values.get("brief")
+    if values.get("status") != "ready" or not brief:
+        raise AppError(
+            "interview_not_finished",
+            status_code=409,
+            title="A few questions are still open",
+            message="The plan is built from your answers, and some questions aren't answered yet.",
+            action="Answer the questions above, then the plan starts on its own.",
+        )
+    return str(brief)
+
+
+@router.post("/{chat_id}/plan", response_class=EventSourceResponse)
+def build_plan(
+    chat: OwnedChat,
+    brief: Annotated[str, Depends(interview_finished)],
+    session: SessionDep,
+    checkpointer: CheckpointerDep,
+    ask_for: AskFactoryDep,
+) -> Iterator[ServerSentEvent]:
+    existing = plan_for_chat(session, chat.id)
+    if existing is None:
+        graph = build_plan_graph(checkpointer)
+        config: RunnableConfig = {"configurable": {"thread_id": plan_thread_id(str(chat.id))}}
+        snapshot = graph.get_state(config)
+        if "plan" not in snapshot.values:
+            chat.status = "generating"
+            session.commit()
+            start: PlanState = {"idea": chat.idea, "brief": brief}
+            ok = yield from planning_events(
+                graph,
+                None if snapshot.next else start,  # retry continues from the failed step
+                config=config,
+                context=PlanContext(ask=ask_for(chat.id)),
+            )
+            if not ok:
+                with session_scope() as s:
+                    if (row := s.get(Chat, chat.id)) is not None:
+                        row.status = "failed"
+                return
+        data: dict[str, Any] = dict(graph.get_state(config).values["plan"])
+        with session_scope() as s:
+            row = s.get(Chat, chat.id)
+            assert row is not None
+            existing = save_first_version(s, row, data)
+            s.flush()
+            plan_id = existing.id
+    else:
+        plan_id = existing.id
+        version = current_version(session, existing)
+        data = dict(version.data) if version else {}
+
+    for card in file_cards(plan_id, data):
+        yield ServerSentEvent(event="file.ready", data={"file": card})
+    yield ServerSentEvent(event="done", data={"planId": str(plan_id)})
 
 
 def _run(

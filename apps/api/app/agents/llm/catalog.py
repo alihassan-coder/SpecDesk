@@ -95,30 +95,41 @@ def _price(inp: str, out: str, cache_read: str) -> ModelPrice:
 
 
 _CLAUDE = Capabilities(structured_output=True, thinking=True, web_search=True)
+_GPT_OSS = Capabilities(structured_output=True, thinking=True, web_search=False)
 
+# Groq is the default for now (decision 41). Claude stays listed but switched off,
+# so an admin can turn it on once an Anthropic key is added.
 DEFAULT_CATALOG = ModelCatalog(
     models=[
         ModelEntry(
+            id="groq:openai/gpt-oss-120b",
+            label="GPT-OSS 120B (Groq)",
+            price=_price("0.15", "0.60", "0.075"),
+            capabilities=_GPT_OSS,
+        ),
+        ModelEntry(
+            id="groq:openai/gpt-oss-20b",
+            label="GPT-OSS 20B (Groq)",
+            price=_price("0.075", "0.30", "0.0375"),
+            capabilities=_GPT_OSS,
+        ),
+        ModelEntry(
             id="anthropic:claude-opus-5-5",
             label="Claude Opus 5.5",
+            enabled=False,
             price=_price("4", "20", "0.20"),
             capabilities=_CLAUDE,
         ),
         ModelEntry(
             id="anthropic:claude-sonnet-5-5",
             label="Claude Sonnet 5.5",
+            enabled=False,
             price=_price("2", "10", "0.20"),
             capabilities=_CLAUDE,
         ),
-        ModelEntry(
-            id="anthropic:claude-haiku-5-5",
-            label="Claude Haiku 5.5",
-            price=_price("0.10", "0.50", "0.01"),
-            capabilities=_CLAUDE,
-        ),
     ],
-    default_model="anthropic:claude-opus-5-5",
-    fallback_models=["anthropic:claude-sonnet-5-5"],
+    default_model="groq:openai/gpt-oss-120b",
+    fallback_models=["groq:openai/gpt-oss-20b"],
     agent_effort={"interviewer": "medium"},
 )
 

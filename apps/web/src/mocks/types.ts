@@ -10,6 +10,7 @@ export type AgentId =
   | "architect"
   | "estimator"
   | "critic"
+  | "backlog"
   | "researcher";
 
 export type AgentStatus = "queued" | "working" | "done" | "error";

@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronsUpDown, LogIn, LogOut, Monitor, Moon, Settings, ShieldCheck, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 import { useDemoSession } from "@/components/providers/demo-session";
+import { authClient } from "@/lib/auth-client";
+import { humanize } from "@/lib/errors";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -32,7 +35,7 @@ function initials(name: string) {
 }
 
 export function NavUser() {
-  const { role, name, email, setRole } = useDemoSession();
+  const { role, name, email } = useDemoSession();
   const { isMobile } = useSidebar();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
@@ -117,8 +120,17 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
-                setRole("guest");
-                router.push("/");
+                void authClient
+                  .signOut()
+                  .then(({ error }) => {
+                    if (error) throw new Error(error.message ?? "sign-out failed");
+                    router.push("/");
+                    router.refresh();
+                  })
+                  .catch(() => {
+                    const e = humanize("network");
+                    toast.error("We couldn't sign you out", { description: `${e.message} ${e.action}` });
+                  });
               }}
             >
               <LogOut /> Sign out

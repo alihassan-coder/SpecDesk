@@ -12,7 +12,7 @@ Read before working: [docs/PLAN.md](docs/PLAN.md) (scope & milestones), [docs/AR
 - Env: `apps/api/.env` and `apps/web/.env.local` hold real secrets (gitignored). `.env.example` holds placeholders only — never real values.
 
 ## Commands
-- `pnpm dev:web` — run frontend (from repo root)
+- `pnpm dev` — run website + API together; `pnpm dev:web` / `pnpm dev:api` — one of them (all from repo root)
 - `pnpm lint:web` / `pnpm build:web`
 - Add shadcn components: `cd apps/web && npm_config_prefer_offline=true pnpm dlx shadcn@latest add <component>`
 - Installs: always `pnpm install --prefer-offline` (slow network; local store has almost everything)

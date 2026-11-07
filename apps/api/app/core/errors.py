@@ -74,6 +74,26 @@ KNOWN: dict[str, tuple[str, str, str]] = {
         "A few fields are missing or in the wrong format.",
         "Fix the highlighted fields and send again.",
     ),
+    "sign_in_required": (
+        "Please sign in",
+        "You need to be signed in to do that.",
+        "Sign in with your email to continue.",
+    ),
+    "session_expired": (
+        "Your session expired",
+        "For your security, sign-ins don't last forever.",
+        "Sign in again.",
+    ),
+    "admin_only": (
+        "Admins only",
+        "This area is for the SpecDesk team. Your account isn't on the admin list.",
+        "Go back to your plans, or sign in with an admin email.",
+    ),
+    "auth_unavailable": (
+        "We can't check your sign-in right now",
+        "The sign-in service didn't answer. You're still signed in.",
+        "Wait a moment and try again.",
+    ),
     "database_unavailable": (
         "We can't reach our database",
         "Your work is safe, but we can't load or save anything right now.",

@@ -2,7 +2,9 @@
   "name": "specdesk",
   "private": true,
   "scripts": {
+    "dev": "pnpm run \"/^dev:(web|api)$/\"",
     "dev:web": "pnpm --filter web dev",
+    "dev:api": "cd apps/api && uv run uvicorn app.main:app --reload --port 8000",
     "build:web": "pnpm --filter web build",
     "lint:web": "pnpm --filter web lint"
   }

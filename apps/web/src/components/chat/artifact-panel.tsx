@@ -12,10 +12,31 @@ import { estimate } from "@/lib/pricing";
 import { fileIcon } from "./file-cards";
 
 /** Side panel that previews a generated file — like ChatGPT/Claude artifacts. */
-export function ArtifactPanel({ file, onClose }: { file: PlanFile; onClose: () => void }) {
+export function ArtifactPanel({
+  file,
+  onClose,
+  downloadHref,
+  siblings,
+}: {
+  file: PlanFile;
+  onClose: () => void;
+  /** Real download link (live plans). Without it the demo shows a toast. */
+  downloadHref?: string;
+  /** The plan's other files, listed when previewing the ZIP. */
+  siblings?: PlanFile[];
+}) {
   const Icon = fileIcon[file.kind];
 
-  const download = () => toast.success(`Downloading ${file.name}`, { description: "Real files arrive in M5." });
+  const download = () => {
+    if (!downloadHref) {
+      toast.success(`Downloading ${file.name}`, { description: "This is the demo — sign in to get real files." });
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = downloadHref;
+    a.download = file.name;
+    a.click();
+  };
   const copy = async () => {
     if (!file.preview) return;
     try {
@@ -66,7 +87,7 @@ export function ArtifactPanel({ file, onClose }: { file: PlanFile; onClose: () =
       <ScrollArea className="min-h-0 flex-1">
         <div className="p-4">
           {file.kind === "pdf" && <PdfPreview />}
-          {file.kind === "zip" && <ZipPreview />}
+          {file.kind === "zip" && <ZipPreview files={siblings ?? DEMO_PLAN.files} />}
           {file.kind === "csv" && file.preview && <CsvPreview text={file.preview} />}
           {(file.kind === "md" || file.kind === "mmd" || file.kind === "json") && file.preview && (
             <pre className="overflow-x-auto rounded-lg border bg-background p-4 font-mono text-[13px] leading-relaxed whitespace-pre-wrap">
@@ -118,10 +139,10 @@ function PdfPreview() {
   );
 }
 
-function ZipPreview() {
+function ZipPreview({ files }: { files: PlanFile[] }) {
   return (
     <ul className="divide-y rounded-lg border font-mono text-sm">
-      {DEMO_PLAN.files
+      {files
         .filter((f) => f.kind !== "zip")
         .map((f) => (
           <li key={f.id} className="flex justify-between px-3 py-2">
@@ -133,8 +154,38 @@ function ZipPreview() {
   );
 }
 
+/** Reads CSV with quoted fields (commas and line breaks inside quotes). */
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"' && text[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else if (ch === '"') quoted = false;
+      else cell += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === ",") {
+      row.push(cell);
+      cell = "";
+    } else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else cell += ch;
+  }
+  if (cell || row.length) rows.push([...row, cell]);
+  return rows.filter((r) => r.some((c) => c.trim()));
+}
+
 function CsvPreview({ text }: { text: string }) {
-  const [head, ...rows] = text.trim().split("\n").map((r) => r.split(","));
+  const [head = [], ...rows] = parseCsv(text);
   return (
     <div className="overflow-x-auto rounded-lg border">
       <table className="w-full text-sm">
@@ -151,7 +202,7 @@ function CsvPreview({ text }: { text: string }) {
           {rows.map((r) => (
             <tr key={r[0]} className="border-t">
               {r.map((c, i) => (
-                <td key={i} className="px-3 py-2 whitespace-nowrap">
+                <td key={i} className="px-3 py-2 align-top whitespace-pre-line">
                   {c}
                 </td>
               ))}

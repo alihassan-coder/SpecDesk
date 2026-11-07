@@ -25,7 +25,19 @@ const MOSCOW: { key: Moscow; label: string; hint: string }[] = [
 
 const impactTone = { high: "border-destructive/50 text-destructive", medium: "border-primary/50 text-primary", low: "text-muted-foreground" };
 
-export function PlanWorkspace({ plan, readOnly = false }: { plan: Plan; readOnly?: boolean }) {
+export function PlanWorkspace({
+  plan,
+  readOnly = false,
+  onSaveVersion,
+  downloadAllHref,
+}: {
+  plan: Plan;
+  readOnly?: boolean;
+  /** Live plans: saves the scope on the server, which prices it and returns the new version. */
+  onSaveVersion?: (included: Record<string, boolean>, change: string) => Promise<PlanVersion>;
+  /** Live plans: the ZIP with every file. */
+  downloadAllHref?: string;
+}) {
   const [features, setFeatures] = useState<Feature[]>(plan.features);
   const [baseline, setBaseline] = useState<Feature[]>(plan.features);
   const [versions, setVersions] = useState<PlanVersion[]>(plan.versions);
@@ -38,7 +50,9 @@ export function PlanWorkspace({ plan, readOnly = false }: { plan: Plan; readOnly
 
   const toggle = (id: string) => setFeatures((fs) => fs.map((f) => (f.id === id ? { ...f, included: !f.included } : f)));
 
-  const saveVersion = () => {
+  const [saving, setSaving] = useState(false);
+
+  const saveVersion = async () => {
     const n = versions.length + 1;
     const added = features.filter((f, i) => f.included && !baseline[i].included).map((f) => f.name);
     const removed = features.filter((f, i) => !f.included && baseline[i].included).map((f) => f.name);
@@ -49,12 +63,30 @@ export function PlanWorkspace({ plan, readOnly = false }: { plan: Plan; readOnly
     ]
       .filter(Boolean)
       .join(" ");
-    setVersions((v) => [
-      ...v,
-      { id: `v${n}`, label: `v${n} · Your edit`, createdAt: new Date().toISOString(), priceMin: live.priceMin, priceMax: live.priceMax, weeks: live.weeks, change },
-    ]);
+    let version: PlanVersion = {
+      id: `v${n}`,
+      label: `v${n} · Your edit`,
+      createdAt: new Date().toISOString(),
+      priceMin: live.priceMin,
+      priceMax: live.priceMax,
+      weeks: live.weeks,
+      change,
+    };
+    if (onSaveVersion) {
+      setSaving(true);
+      try {
+        version = await onSaveVersion(Object.fromEntries(features.map((f) => [f.id, f.included])), change);
+      } catch (e) {
+        const err = e as { error?: { title: string; action: string } };
+        toast.error(err.error?.title ?? "Couldn't save this version", { description: err.error?.action ?? "Try again in a moment." });
+        return;
+      } finally {
+        setSaving(false);
+      }
+    }
+    setVersions((v) => [...v, version]);
     setBaseline(features);
-    toast.success(`Saved as v${n}`, { description: change });
+    toast.success(`Saved as v${n}`, { description: version.change || change });
   };
 
   return (
@@ -68,18 +100,28 @@ export function PlanWorkspace({ plan, readOnly = false }: { plan: Plan; readOnly
         </div>
         {!readOnly && (
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                void navigator.clipboard?.writeText(`${location.origin}/share/demo-token`).catch(() => undefined);
-                toast.success("Share link copied", { description: "Anyone with the link can view this plan. They can't edit it." });
-              }}
-            >
-              <Share2 className="size-4" /> Share
-            </Button>
-            <Button variant="outline" onClick={() => toast.success("Preparing rehabit-specdesk.zip", { description: "Real files arrive in M5." })}>
-              <Download className="size-4" /> Download all
-            </Button>
+            {!onSaveVersion && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(`${location.origin}/share/demo-token`).catch(() => undefined);
+                  toast.success("Share link copied", { description: "Anyone with the link can view this plan. They can't edit it." });
+                }}
+              >
+                <Share2 className="size-4" /> Share
+              </Button>
+            )}
+            {downloadAllHref ? (
+              <Button variant="outline" asChild>
+                <a href={downloadAllHref} download>
+                  <Download className="size-4" /> Download all
+                </a>
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => toast.success("Preparing rehabit-specdesk.zip", { description: "This is the demo — sign in to get real files." })}>
+                <Download className="size-4" /> Download all
+              </Button>
+            )}
             <Button onClick={() => setBookingOpen(true)}>
               <CalendarCheck className="size-4" /> Book a call
             </Button>
@@ -103,8 +145,8 @@ export function PlanWorkspace({ plan, readOnly = false }: { plan: Plan; readOnly
         </dl>
         {dirty && !readOnly && (
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-            <Button size="sm" onClick={saveVersion}>
-              Save as v{versions.length + 1}
+            <Button size="sm" onClick={() => void saveVersion()} disabled={saving}>
+              {saving ? "Saving…" : `Save as v${versions.length + 1}`}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setFeatures(baseline)}>
               <Undo2 className="size-4" /> Undo
