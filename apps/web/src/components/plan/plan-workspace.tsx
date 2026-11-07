@@ -167,7 +167,7 @@ export function PlanWorkspace({
       </div>
 
       {/* Live numbers */}
-      <div className="sticky top-14 z-10 -mx-4 border-b bg-background/90 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky top-14 z-10 -mx-4 border-b bg-background px-4 py-4 sm:-mx-6 sm:px-6">
         <dl className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <div>
             <Stat label="Price range" value={formatRange(live.priceMin, live.priceMax)} delta={dirty ? signedMoney(live.priceMax - saved.priceMax) : undefined} up={live.priceMax > saved.priceMax} />
