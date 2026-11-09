@@ -67,15 +67,24 @@ async function toApiError(res: Response): Promise<ApiError> {
   return new ApiError(humanize(res.status === 404 ? "not_found" : "server_error"), res.status);
 }
 
+/** Normal API calls give up after this long; streams (SSE) have no limit. */
+const REQUEST_TIMEOUT_MS = 60_000;
+
+function offlineOr(code: string): HumanError {
+  return humanize(typeof navigator !== "undefined" && !navigator.onLine ? "network" : code);
+}
+
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`/api/v1${path}`, {
       ...init,
+      signal: init?.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       headers: { "content-type": "application/json", ...init?.headers },
     });
-  } catch {
-    throw new ApiError(humanize("network"), 0);
+  } catch (e) {
+    const timedOut = e instanceof DOMException && e.name === "TimeoutError";
+    throw new ApiError(timedOut ? offlineOr("timeout") : humanize("network"), 0);
   }
   if (!res.ok) throw await toApiError(res);
   return (await res.json()) as T;
@@ -131,7 +140,8 @@ export async function streamEvents(
       chunk = await reader.read();
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return;
-      throw new ApiError(humanize("network"), 0);
+      // The connection dropped part-way: the server keeps what's done, so it can be continued.
+      throw new ApiError(offlineOr("stream_interrupted"), 0);
     }
     if (chunk.done) break;
     buffer += chunk.value.replace(/\r\n/g, "\n");

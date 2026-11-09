@@ -4,6 +4,7 @@ Wording for shared codes matches apps/web/src/lib/errors.ts.
 """
 
 import logging
+import uuid
 from collections.abc import Sequence
 from typing import Any
 
@@ -190,9 +191,19 @@ async def _validation(_: Request, exc: Exception) -> JSONResponse:
 
 
 async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
-    # Full detail goes to server logs only; the client gets the friendly generic message.
-    logger.exception("Unhandled error on %s %s", request.method, request.url.path, exc_info=exc)
-    return error_response(500, humanize("internal"))
+    # Full detail goes to server logs only; the client gets the friendly generic message plus a
+    # short reference, so a support request can be matched to the log line.
+    reference = uuid.uuid4().hex[:8]
+    logger.exception(
+        "Unhandled error [ref %s] on %s %s",
+        reference,
+        request.method,
+        request.url.path,
+        exc_info=exc,
+    )
+    error = humanize("internal")
+    error.action = f"{error.action} If it keeps happening, mention reference {reference}."
+    return error_response(500, error)
 
 
 def install_error_handlers(app: FastAPI) -> None:

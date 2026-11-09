@@ -12,6 +12,16 @@ const KNOWN: Record<string, Omit<HumanError, "code">> = {
     message: "SpecDesk couldn't reach the server.",
     action: "Check your connection and try again.",
   },
+  timeout: {
+    title: "That took too long",
+    message: "SpecDesk's server didn't answer in time. Nothing was lost.",
+    action: "Try again in a moment.",
+  },
+  stream_interrupted: {
+    title: "The connection dropped",
+    message: "We lost the live updates part-way. Everything finished so far is saved.",
+    action: "Press Retry to continue from where it stopped.",
+  },
   rate_limited: {
     title: "Slow down a little",
     message: "You've started several plans in a short time.",

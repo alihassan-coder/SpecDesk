@@ -1,5 +1,6 @@
 """Every error leaves the API in the humanized shape — never a stack trace."""
 
+import re
 from typing import cast
 
 from fastapi import FastAPI
@@ -68,6 +69,14 @@ def test_unhandled_exception_is_generic_500_without_details() -> None:
     assert err["title"] == "Something went wrong on our side"
     assert "secret" not in res.text
     assert "Traceback" not in res.text
+
+
+def test_unhandled_error_gives_a_short_reference_for_support() -> None:
+    first = client.get("/boom").json()["error"]["action"]
+    second = client.get("/boom").json()["error"]["action"]
+    assert re.search(r"reference [0-9a-f]{8}\.$", first)
+    assert first != second  # one reference per failure, never accumulated
+    assert first.count("reference") == 1
 
 
 def test_known_code_uses_shared_wording() -> None:

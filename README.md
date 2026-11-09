@@ -4,11 +4,35 @@ SpecDesk turns an app idea into a full build plan: features, screens, stack, tim
 It gets there by interviewing the founder with AI agents. At the end, the founder can book a call
 with the agency.
 
-## Demo
+## Screenshots
 
-![SpecDesk demo](docs/media/demo.gif)
+**Describe the idea and set a budget.** The slider tells the planners how big the first version can be.
 
-Full demo video: [demo.mp4](docs/media/demo.mp4)
+![Idea box with the budget slider](docs/media/screens/01-landing.png)
+
+**Say "hi" and it asks about your app**, instead of starting a plan.
+
+![Front desk reply to a greeting](docs/media/screens/02-front-desk.png)
+
+**The plan arrives in the chat** with its files, and web research on real competitors.
+
+| Plan ready, with files | Competitors from the web |
+|---|---|
+| ![Plan ready in the chat](docs/media/screens/03-plan-ready.png) | ![Web research](docs/media/screens/04-research.png) |
+
+**The plan workspace.** Switch features on or off and the price updates. "Why this price" shows every step.
+
+| Features and scope | Why this price |
+|---|---|
+| ![Plan workspace](docs/media/screens/05-plan.png) | ![Price breakdown](docs/media/screens/06-why-this-price.png) |
+
+| Screens with wireframes | Admin: leads, plans, models, keys |
+|---|---|
+| ![Screens tab](docs/media/screens/07-screens.png) | ![Admin panel](docs/media/screens/08-admin.png) |
+
+<p align="center"><img src="docs/media/screens/09-mobile.png" alt="Plan on a phone" width="260"></p>
+
+A short screen recording is in [docs/media/demo.mp4](docs/media/demo.mp4).
 
 ## How it works
 
